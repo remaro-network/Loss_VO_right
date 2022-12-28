@@ -3,7 +3,7 @@ from utils.loadconfig import ConfigLoader
 from utils.general import mkdir_if_not_exists
 import cv2
 import torch
-
+import numpy as np
 from .kitti import KittiOdom, KittiRaw
 from .tum import TUM
 from .euroc import EUROC
@@ -53,7 +53,7 @@ class MultiDataset(Dataset):
         return sum
 class SingleDataset(Dataset):
     """ loads a single sequence as data set"""    
-    def __init__(self, cfg):        
+    def __init__(self, cfg):  
         # Read config file
         config_loader = ConfigLoader()
         self.cfg = self.read_cfg(config_loader,cfg)
@@ -68,8 +68,15 @@ class SingleDataset(Dataset):
 
     def preprocess_image(self,img,intrinsics,distcoeffs=None,crop_box=None):
         # undistort image
+        h,w,ch = img.shape
+
         if distcoeffs is not None:
-            img = cv2.undistort(img, intrinsics, distcoeffs)
+            distcoeffs = np.array([distcoeffs[0],distcoeffs[1],distcoeffs[3],0.,distcoeffs[2]])
+            intrinsics = np.array([[intrinsics[0],0,intrinsics[2]],[0,intrinsics[1],intrinsics[3]],[0,0,1]])
+            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(intrinsics,distcoeffs,(w,h),1,(w,h))
+            mapx,mapy = cv2.initUndistortRectifyMap(intrinsics,distcoeffs,None,newcameramtx,(w,h),5)
+            img = cv2.remap(img,mapx,mapy,cv2.INTER_LINEAR)
+
         # crop image
         if crop_box is not None:
             img = img[crop_box[1]:crop_box[1]+crop_box[3], crop_box[0]:crop_box[0]+crop_box[2]]
@@ -90,31 +97,30 @@ class SingleDataset(Dataset):
         return image_tensor
 
     def __getitem__(self, index: int):
-
         # keyframe
         keyframe_id = index
         keyframe_timestamp = self.dataset.get_timestamp(index)
         keyframe = self.dataset.get_image(keyframe_timestamp)
         intrinsics = self.dataset.get_intrinsics_param()
-        keyframe = self.preprocess_image(keyframe, intrinsics,self.cfg.crop_box)
-        keyframe_abs_gt = self.dataset.get_gt_poses()[keyframe_timestamp]
-
+        distortion_params = self.dataset.get_distortion_param()
+        keyframe = self.preprocess_image(keyframe, intrinsics,distortion_params,self.cfg.crop_box)
+        keyframe_abs_gt = torch.from_numpy(self.dataset.get_gt_poses()[keyframe_timestamp])
         # frames of sequence
         frame_indexes = [i+index+1 for i in range(0, self.cfg.seq_len)]
         frame_timestamps = [self.dataset.get_timestamp(i) for i in frame_indexes]
-        frames = [self.preprocess_image(self.dataset.get_image(i),intrinsics,self.cfg.crop_box) for i in frame_timestamps]
-        frame_abs_gts = [self.dataset.get_gt_poses()[i] for i in frame_timestamps]
-
+        frames = [self.preprocess_image(self.dataset.get_image(i),intrinsics,distortion_params,self.cfg.crop_box) for i in frame_timestamps]
+        frame_abs_gts = [torch.from_numpy(self.dataset.get_gt_poses()[i]) for i in frame_timestamps]
+        frame_rel_gts = [torch.matmul(torch.inverse(keyframe_abs_gt), frame_abs_gt) for frame_abs_gt in frame_abs_gts]
         data = {
             "keyframe": keyframe, # the reference image
             "keyframe_pose": torch.eye(4, dtype=torch.float32), # always identity
             "keyframe_intrinsics": intrinsics,
             "frames": [self.dataset.get_image(i) for i in frame_timestamps], # (ordered) neighboring images
-            # "poses": poses, # H_ref_src
+            "poses": [torch.eye(4, dtype=torch.float32)],
+            "poses": frame_rel_gts, # H_ref_src
             "intrinsics": intrinsics,
             "image_id": index
         }
-
         return data
 
     def __len__(self) -> int:

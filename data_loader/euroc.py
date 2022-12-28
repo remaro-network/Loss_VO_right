@@ -128,6 +128,25 @@ class EUROC(Dataset):
         intrinsics_param = [cx, cy, fx, fy]
         return intrinsics_param
 
+    def get_distortion_param(self):
+        """Read distortion parameters for each dataset
+
+        Returns:
+            distortion_params (list): [d1, d2, d3, d4]
+        """
+
+        # Read EUROC's YAML file
+        with open(os.path.join(self.cfg.directory.img_seq_dir, "sensor.yaml"), 'r') as stream:
+            sensor = yaml.safe_load(stream)
+
+        d1 = sensor['distortion_coefficients'][0]
+        d2 = sensor['distortion_coefficients'][1]
+        d3 = sensor['distortion_coefficients'][2]
+        d4 = sensor['distortion_coefficients'][3]
+
+        intrinsics_param = [d1, d2, d3, d4]
+        return intrinsics_param
+
     def get_data_dir(self):
         """Get data directory
 
