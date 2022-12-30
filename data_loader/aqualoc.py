@@ -25,10 +25,7 @@ class AQUALOC(Dataset):
     '''
     def __init__(self, *args, **kwargs):
         super(AQUALOC, self).__init__(*args, **kwargs)
-        self.gt_timestamps = []
-        # update gt poses for sync pairs
-        if self.cfg.directory.gt_pose_dir is not None:
-            self.update_gt_pose()
+
 
     def update_gt_pose(self):
         """Update GT pose according to sync pairs
@@ -128,6 +125,26 @@ class AQUALOC(Dataset):
 
         intrinsics_param = [fx, fy, cx, cy]
         return intrinsics_param
+
+    def get_distortion_param(self):
+        """Read distortion parameters for each dataset
+
+        Returns:
+            distortion_param (list): [k1, k2, p1, p2]
+        """
+        # Read AQUALOC's YAML file
+        with open(os.path.join(self.cfg.directory.gt_pose_dir,"archaeo_calibration_files","archaeo_camera_calib.yaml"), 'r') as stream:
+            sensor = yaml.safe_load(stream)
+            sensor = sensor["cam0"]
+                
+        k1 = sensor['distortion_coeffs'][0]
+        k2 = sensor['distortion_coeffs'][1]
+        p1 = sensor['distortion_coeffs'][2]
+        p2 = sensor['distortion_coeffs'][3]
+
+        distortion_param = [k1, k2, p1, p2]
+
+        return distortion_param
 
     def get_data_dir(self):
         """Get data directory

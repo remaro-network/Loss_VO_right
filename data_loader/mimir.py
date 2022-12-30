@@ -25,10 +25,7 @@ class MIMIR(Dataset):
     '''
     def __init__(self, *args, **kwargs):
         super(MIMIR, self).__init__(*args, **kwargs)
-        self.gt_timestamps = []
-        # update gt poses for sync pairs
-        if self.cfg.directory.gt_pose_dir is not None:
-            self.update_gt_pose()
+
 
     def update_gt_pose(self):
         """Update GT pose according to sync pairs
@@ -127,7 +124,24 @@ class MIMIR(Dataset):
 
         intrinsics_param = [fx, fy, cx, cy]
         return intrinsics_param
+    def get_distortion_param(self):
+        """Read distortion parameters for each dataset
 
+        Returns:
+            distortion_params (list): [d1, d2, d3, d4]
+        """
+
+        # Read EUROC's YAML file
+        with open(os.path.join(self.cfg.directory.img_seq_dir, "sensor.yaml"), 'r') as stream:
+            sensor = yaml.safe_load(stream)
+
+        d1 = sensor['distortion_coefficients'][0]
+        d2 = sensor['distortion_coefficients'][1]
+        d3 = sensor['distortion_coefficients'][2]
+        d4 = sensor['distortion_coefficients'][3]
+
+        intrinsics_param = [d1, d2, d3, d4]
+        return intrinsics_param
     def get_data_dir(self):
         """Get data directory
 

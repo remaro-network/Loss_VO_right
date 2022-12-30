@@ -111,29 +111,37 @@ class SingleDataset(Dataset):
         return image_tensor
 
     def __getitem__(self, index: int):
+        if index == len(self.dataset.rgb_d_pose_pair):
+            raise IndexError
         # keyframe
         keyframe_id = index
         keyframe_timestamp = self.dataset.get_timestamp(index)
         keyframe = self.dataset.get_image(keyframe_timestamp)
         keyframe = self.preprocess_image(keyframe, self.intrinsics,self.distortion_params,self.cfg.crop_box)
-        keyframe_abs_gt = torch.from_numpy(self.dataset.gt_poses[index])
+
         # frames of sequence
         frame_indexes = [i+index+1 for i in range(0, self.cfg.seq_len)]
-        frame_timestamps = [self.dataset.get_timestamp(i) for i in frame_indexes]
-        frames = [self.preprocess_image(self.dataset.get_image(i),self.intrinsics,self.distortion_params,self.cfg.crop_box) for i in frame_timestamps]
-        frame_abs_gts = [torch.from_numpy(self.dataset.gt_poses[i]) for i in frame_indexes]
-        frame_rel_gts = [torch.matmul(torch.inverse(keyframe_abs_gt), frame_abs_gt) for frame_abs_gt in frame_abs_gts]
+        
+        if any(i >= len(self.dataset.rgb_d_pose_pair) for i in frame_indexes):
+            frames = None
+            frame_rel_gts = None
+        else:
+            keyframe_abs_gt = torch.from_numpy(self.dataset.gt_poses[index]).to(dtype=torch.float32) 
+            frame_timestamps = [self.dataset.get_timestamp(i) for i in frame_indexes]
+            frames = [self.preprocess_image(self.dataset.get_image(i),self.intrinsics,self.distortion_params,self.cfg.crop_box) for i in frame_timestamps]
+            frame_abs_gts = [torch.from_numpy(self.dataset.gt_poses[i]).to(dtype=torch.float32) for i in frame_indexes]
+            frame_rel_gts = [torch.matmul(torch.inverse(keyframe_abs_gt), frame_abs_gt) for frame_abs_gt in frame_abs_gts]
         data = {
             "keyframe": keyframe, # the reference image
             "keyframe_pose": torch.eye(4, dtype=torch.float32), # always identity
             "keyframe_intrinsics": self.intrinsics,
-            "frames": [self.dataset.get_image(i) for i in frame_timestamps], # (ordered) neighboring images
-            "poses": [torch.eye(4, dtype=torch.float32)],
+            "frames": frames, # (ordered) neighboring images
             "poses": frame_rel_gts, # H_ref_src
             "intrinsics": self.intrinsics,
             "image_id": index
         }
         return data
+
 
     def __len__(self) -> int:
         return len(self.dataset.rgb_d_pose_pair)

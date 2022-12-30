@@ -66,6 +66,7 @@ def read_file_list(filename):
     lines = data.replace(","," ").replace("\t"," ").split("\n") 
     list = [[v.strip() for v in line.split(" ") if v.strip()!=""] for line in lines if len(line)>0 and line[0]!="#"]
     list = [(float(l[0]),l[1:]) for l in list if len(l)>1]
+    file.close()
     return dict(list)
 
 def associate(first_list, second_list,offset,max_difference):
