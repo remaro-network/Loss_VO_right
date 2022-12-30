@@ -18,7 +18,45 @@ def plot_route(gt, c_gt='g'):
 
 class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
-    def test_SingleDataLoader_image(self):
+    @unittest.skip("Skipping TUM test")
+    def test_SingleDataLoader_TUM(self):
+        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","TUM","freiburg1_360.yml")
+        _dset = SingleDataset(cfg_dir)
+
+        i=0
+        T_target_prev = list()  
+
+        for d in tqdm(_dset):
+            plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
+
+            H_kf0_kf1 = d["poses"][0]
+            if i ==0:
+                T_target_prev.append(H_kf0_kf1)
+                i += 1 
+                continue # in first it go to next frame to retrieve rel pose
+            # Absolute values
+            H_0_kf0 = T_target_prev[-1]
+            H_0_kf1 =torch.matmul(H_0_kf0,H_kf0_kf1)
+            
+            T_target_prev.append(H_0_kf1)
+            
+            i += 1 
+
+            plt.pause(0.005)
+
+        plt.show(block=False)
+        plt.pause(.003)
+        plt.close()
+
+        plot_route(T_target_prev, c_gt='g')
+        plt.show()
+        # plt.show(block=False) # uncomment if you want it to auto close
+        # plt.pause(3)
+        # plt.close()
+
+    @classmethod
+    # @unittest.skip("Skipping dataloader euroc test")
+    def test_SingleDataLoader_euroc(self):
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","EuRoC","MH_04_difficult.yml")
         _dset = SingleDataset(cfg_dir)
 
@@ -44,7 +82,7 @@ class TestDatabaseDataloader(unittest.TestCase):
             plt.pause(0.005)
 
         plt.show(block=False)
-        plt.pause(3)
+        plt.pause(.003)
         plt.close()
 
         plot_route(T_target_prev, c_gt='g')

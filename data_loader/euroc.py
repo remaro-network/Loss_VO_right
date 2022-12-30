@@ -25,10 +25,10 @@ class EUROC(Dataset):
     '''
     def __init__(self, *args, **kwargs):
         super(EUROC, self).__init__(*args, **kwargs)
-        self.gt_timestamps = []
-        # update gt poses for sync pairs
-        if self.cfg.directory.gt_pose_dir is not None:
-            self.update_gt_pose()
+        # self.gt_timestamps = []
+        # # update gt poses for sync pairs
+        # if self.cfg.directory.gt_pose_dir is not None:
+        #     self.update_gt_pose()
 
     def update_gt_pose(self):
         """Update GT pose according to sync pairs

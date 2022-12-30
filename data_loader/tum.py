@@ -25,9 +25,9 @@ class TUM(Dataset):
     def __init__(self, *args, **kwargs):
         super(TUM, self).__init__(*args, **kwargs)
 
-        # update gt poses for sync pairs
-        if self.cfg.directory.gt_pose_dir is not None:
-            self.update_gt_pose()
+        # # update gt poses for sync pairs
+        # if self.cfg.directory.gt_pose_dir is not None:
+        #     self.update_gt_pose()
 
     def synchronize_timestamps(self):
         """Synchronize RGB, Depth, and Pose timestamps to form pairs
@@ -119,15 +119,29 @@ class TUM(Dataset):
         """Read intrinsics parameters for each dataset
 
         Returns:
-            intrinsics_param (list): [cx, cy, fx, fy]
+            intrinsics_param (list): [fx, fy, cx, cy, ]
         """
         tum_intrinsics = {
-                'tum-1': [318.6, 255.3, 517.3, 516.5],  # fr1
-                'tum-2': [325.1, 249.7, 520.9, 521.0],  # fr2
-                'tum-3': [320.1, 247.6, 535.4, 539.2],  # fr3
+                'tum-1': [517.3, 516.5, 318.6, 255.3],  # fr1
+                'tum-2': [520.9, 521.0, 325.1, 249.7],  # fr2
+                'tum-3': [535.4, 539.2, 320.1, 247.6],  # fr3
             }
         intrinsics_param = tum_intrinsics[self.cfg.dataset]
         return intrinsics_param
+    
+    def get_distortion_param(self):
+        """Read distortion parameters for each dataset
+
+        Returns:
+            distortion_param (list): [k1, k2, p1, p2, k3]
+        """
+        tum_distortion = {
+                'tum-1': [0.262383, -0.953104, -0.005358, 0.002628, 1.163314],  # fr1
+                'tum-2': [0.2312, -0.7849, -0.0033, -0.0001, 0.9172],  # fr2
+                'tum-3': [0.0, 0.0, 0.0, 0.0, 0.0],  # fr3
+            }
+        distortion_param = tum_distortion[self.cfg.dataset]
+        return distortion_param
     
     def get_data_dir(self):
         """Get data directory

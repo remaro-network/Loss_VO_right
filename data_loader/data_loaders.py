@@ -57,7 +57,18 @@ class SingleDataset(Dataset):
         # Read config file
         config_loader = ConfigLoader()
         self.cfg = self.read_cfg(config_loader,cfg)
+        self.gt_timestamps = []
+
         self.dataset = datasets[self.cfg.dataset](self.cfg)
+        # read camera intrinsics
+        self.intrinsics = self.dataset.get_intrinsics_param()
+        self.distortion_params = self.dataset.get_distortion_param()
+        # synchronize timestamps
+        self.dataset.synchronize_timestamps()
+        # get gt poses
+        self.gt_poses = self.dataset.get_gt_poses()
+        self.dataset.update_gt_pose()
+        
 
     def read_cfg(self, config_loader, cfg_dir):
         cfg = config_loader.merge_cfg(cfg_dir)
@@ -72,7 +83,7 @@ class SingleDataset(Dataset):
         img = img.astype(np.float32)
 
         if distcoeffs is not None:
-            distcoeffs = np.array([distcoeffs[0],distcoeffs[1],distcoeffs[2],distcoeffs[3]])
+            distcoeffs = np.asarray(distcoeffs)
 
             intrinsics = np.array([[intrinsics[0],0,intrinsics[2]],[0,intrinsics[1],intrinsics[3]],[0,0,1]]).astype(np.float32)
             newcameramtx, roi = cv2.getOptimalNewCameraMatrix(intrinsics,distcoeffs,(w,h),1,(w,h))
@@ -104,28 +115,26 @@ class SingleDataset(Dataset):
         keyframe_id = index
         keyframe_timestamp = self.dataset.get_timestamp(index)
         keyframe = self.dataset.get_image(keyframe_timestamp)
-        intrinsics = self.dataset.get_intrinsics_param()
-        distortion_params = self.dataset.get_distortion_param()
-        keyframe = self.preprocess_image(keyframe, intrinsics,distortion_params,self.cfg.crop_box)
-        keyframe_abs_gt = torch.from_numpy(self.dataset.get_gt_poses()[keyframe_timestamp])
+        keyframe = self.preprocess_image(keyframe, self.intrinsics,self.distortion_params,self.cfg.crop_box)
+        keyframe_abs_gt = torch.from_numpy(self.dataset.gt_poses[index])
         # frames of sequence
         frame_indexes = [i+index+1 for i in range(0, self.cfg.seq_len)]
         frame_timestamps = [self.dataset.get_timestamp(i) for i in frame_indexes]
-        frames = [self.preprocess_image(self.dataset.get_image(i),intrinsics,distortion_params,self.cfg.crop_box) for i in frame_timestamps]
-        frame_abs_gts = [torch.from_numpy(self.dataset.get_gt_poses()[i]) for i in frame_timestamps]
+        frames = [self.preprocess_image(self.dataset.get_image(i),self.intrinsics,self.distortion_params,self.cfg.crop_box) for i in frame_timestamps]
+        frame_abs_gts = [torch.from_numpy(self.dataset.gt_poses[i]) for i in frame_indexes]
         frame_rel_gts = [torch.matmul(torch.inverse(keyframe_abs_gt), frame_abs_gt) for frame_abs_gt in frame_abs_gts]
         data = {
             "keyframe": keyframe, # the reference image
             "keyframe_pose": torch.eye(4, dtype=torch.float32), # always identity
-            "keyframe_intrinsics": intrinsics,
+            "keyframe_intrinsics": self.intrinsics,
             "frames": [self.dataset.get_image(i) for i in frame_timestamps], # (ordered) neighboring images
             "poses": [torch.eye(4, dtype=torch.float32)],
             "poses": frame_rel_gts, # H_ref_src
-            "intrinsics": intrinsics,
+            "intrinsics": self.intrinsics,
             "image_id": index
         }
         return data
 
     def __len__(self) -> int:
-        return len(self.dataset)
+        return len(self.dataset.rgb_d_pose_pair)
         

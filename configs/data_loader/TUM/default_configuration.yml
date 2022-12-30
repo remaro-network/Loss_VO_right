@@ -8,7 +8,7 @@ dataset: ${tum_room}                                      # dataset [kitti_odom,
 seed: 4869                                                # random seed
 image:
     height: 480                                           # image height
-    width: 720                                            # image width
+    width: 640                                            # image width
     ext: png                                              # image file extension for data loading
 seq: ${sequence_name}                                     # sequence to run
 frame_step: 1                                             # frame step
