@@ -53,9 +53,9 @@ class TestDatabaseDataloader(unittest.TestCase):
 
         plot_route(T_target_prev, c_gt='g')
         plt.show()
-        # plt.show(block=False) # uncomment if you want it to auto close
-        # plt.pause(3)
-        # plt.close()
+        plt.show(block=False) # uncomment if you want it to auto close
+        plt.pause(3)
+        plt.close()
 
     @classmethod
     # @unittest.skip("Skipping dataloader euroc test")
@@ -90,9 +90,9 @@ class TestDatabaseDataloader(unittest.TestCase):
 
         plot_route(T_target_prev, c_gt='g')
         plt.show()
-        # plt.show(block=False) # uncomment if you want it to auto close
-        # plt.pause(3)
-        # plt.close()
+        plt.show(block=False) # uncomment if you want it to auto close
+        plt.pause(3)
+        plt.close()
 
     @classmethod
     # @unittest.skip("Skipping dataloader Aqualoc test")
@@ -127,9 +127,9 @@ class TestDatabaseDataloader(unittest.TestCase):
 
         plot_route(T_target_prev, c_gt='g')
         plt.show()
-        # plt.show(block=False) # uncomment if you want it to auto close
-        # plt.pause(3)
-        # plt.close()
+        plt.show(block=False) # uncomment if you want it to auto close
+        plt.pause(3)
+        plt.close()
 
     @classmethod
     # @unittest.skip("Skipping dataloader MIMIR test")
@@ -164,9 +164,9 @@ class TestDatabaseDataloader(unittest.TestCase):
 
         plot_route(T_target_prev, c_gt='g')
         plt.show()
-        # plt.show(block=False) # uncomment if you want it to auto close
-        # plt.pause(3)
-        # plt.close()
+        plt.show(block=False) # uncomment if you want it to auto close
+        plt.pause(3)
+        plt.close()
 
 
 
