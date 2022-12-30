@@ -113,7 +113,7 @@ class MIMIR(Dataset):
         """Read intrinsics parameters for each dataset
 
         Returns:
-            intrinsics_param (list): [cx, cy, fx, fy]
+            intrinsics_param (list): [fx, fy, cx, cy]
         """
 
         # Read MIMIR's YAML file
@@ -125,7 +125,7 @@ class MIMIR(Dataset):
         cx = intrinsics[0][2]
         cy = intrinsics[1][2]
 
-        intrinsics_param = [cx, cy, fx, fy]
+        intrinsics_param = [fx, fy, cx, cy]
         return intrinsics_param
 
     def get_data_dir(self):

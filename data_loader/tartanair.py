@@ -113,7 +113,7 @@ class TartanAIR(Dataset):
         """Read intrinsics parameters for each dataset
 
         Returns:
-            intrinsics_param (list): [cx, cy, fx, fy]
+            intrinsics_param (list): [fx, fy, cx, cy]
         """
 
         # from docs in https://github.com/castacks/tartanair_tools/blob/master/data_type.md
@@ -122,7 +122,7 @@ class TartanAIR(Dataset):
         cx = 320.0  # optical center x
         cy = 240.0  # optical center y
 
-        intrinsics_param = [cx, cy, fx, fy]
+        intrinsics_param = [fx, fy, cx, cy]
         return intrinsics_param
 
     def get_data_dir(self):

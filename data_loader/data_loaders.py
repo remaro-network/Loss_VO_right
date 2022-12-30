@@ -69,12 +69,15 @@ class SingleDataset(Dataset):
     def preprocess_image(self,img,intrinsics,distcoeffs=None,crop_box=None):
         # undistort image
         h,w,ch = img.shape
+        img = img.astype(np.float32)
 
         if distcoeffs is not None:
-            distcoeffs = np.array([distcoeffs[0],distcoeffs[1],distcoeffs[3],0.,distcoeffs[2]])
-            intrinsics = np.array([[intrinsics[0],0,intrinsics[2]],[0,intrinsics[1],intrinsics[3]],[0,0,1]])
+            distcoeffs = np.array([distcoeffs[0],distcoeffs[1],distcoeffs[2],distcoeffs[3]])
+
+            intrinsics = np.array([[intrinsics[0],0,intrinsics[2]],[0,intrinsics[1],intrinsics[3]],[0,0,1]]).astype(np.float32)
             newcameramtx, roi = cv2.getOptimalNewCameraMatrix(intrinsics,distcoeffs,(w,h),1,(w,h))
-            mapx,mapy = cv2.initUndistortRectifyMap(intrinsics,distcoeffs,None,newcameramtx,(w,h),5)
+            # mapx,mapy = cv2.fisheye.initUndistortRectifyMap(intrinsics,distcoeffs,np.eye(3),intrinsics,(w,h),cv2.CV_32F)
+            mapx,mapy = cv2.initUndistortRectifyMap(intrinsics,distcoeffs,np.eye(3),newcameramtx,(w,h),cv2.CV_32F)
             img = cv2.remap(img,mapx,mapy,cv2.INTER_LINEAR)
 
         # crop image

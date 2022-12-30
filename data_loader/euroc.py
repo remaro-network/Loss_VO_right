@@ -125,7 +125,7 @@ class EUROC(Dataset):
         cx = sensor['intrinsics'][2]
         cy = sensor['intrinsics'][3]
 
-        intrinsics_param = [cx, cy, fx, fy]
+        intrinsics_param = [fx, fy, cx, cy]
         return intrinsics_param
 
     def get_distortion_param(self):

@@ -113,7 +113,7 @@ class AQUALOC(Dataset):
         """Read intrinsics parameters for each dataset
 
         Returns:
-            intrinsics_param (list): [cx, cy, fx, fy]
+            intrinsics_param (list): [fx, fy, cx, cy]
         """
 
         # Read AQUALOC's YAML file
@@ -126,7 +126,7 @@ class AQUALOC(Dataset):
         cx = sensor['intrinsics'][2]
         cy = sensor['intrinsics'][3]
 
-        intrinsics_param = [cx, cy, fx, fy]
+        intrinsics_param = [fx, fy, cx, cy]
         return intrinsics_param
 
     def get_data_dir(self):
