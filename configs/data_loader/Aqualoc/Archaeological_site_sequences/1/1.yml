@@ -7,20 +7,20 @@ image:
     height: 480                                           # image height
     width: 752                                            # image width
     ext: png                                              # image file extension for data loading
-seq: ${sequence_name}                                     # sequence to run
+seq: 1                                     # sequence to run
 frame_step: 1                                             # frame step
-seq_len: ${seq_len}
+seq_len: 1
 cam_mode: mono                                            # camera mode: [mono, stereo]
-resize: ${resize}
-crop_box: ${crop_box}
-grayscale: ${grayscale}
+resize: 
+crop_box: 
+grayscale: False
 
 #-------------------------------------
 #- Directories
 #-------------------------------------
 directory:
-    result_dir: ${result_directory}                       # directory to save result
-    img_seq_dir: ${dataset_directory}/archaeo_sequence_${sequence_name}_raw_data/raw_data/images_sequence_${sequence_name}       # image data directory
-    gt_pose_dir: ${dataset_directory}  # (optional) ground-truth pose data directory
-    sequence_number: ${sequence_name}
+    result_dir: ../saved/results/releVO/Aqualoc/Archaeological_site_sequences/1                       # directory to save result
+    img_seq_dir: /home/olaya/Datasets/Aqualoc/Archaeological_site_sequences/archaeo_sequence_1_raw_data/raw_data/images_sequence_1       # image data directory
+    gt_pose_dir: /home/olaya/Datasets/Aqualoc/Archaeological_site_sequences  # (optional) ground-truth pose data directory
+    sequence_number: 1
     depth_dir:                                            # (optional) external depth data, e.g. ground-truth depths

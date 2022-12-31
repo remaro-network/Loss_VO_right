@@ -20,7 +20,8 @@ class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
     # @unittest.skip("Skipping TUM test")
     def test_SingleDataLoader_TUM(self):
-        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","TUM","freiburg1_360.yml")
+        test_sequence = "rgbd_dataset_freiburg1_360"
+        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","TUM", test_sequence, test_sequence+".yml")
         _dset = SingleDataset(cfg_dir)
 
         i=0
@@ -60,7 +61,8 @@ class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
     # @unittest.skip("Skipping dataloader euroc test")
     def test_SingleDataLoader_euroc(self):
-        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","EuRoC","MH_04_difficult.yml")
+        test_sequence="MH_04_difficult"
+        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","EuRoC", test_sequence, test_sequence+".yml")
         _dset = SingleDataset(cfg_dir)
 
         i=0
@@ -97,7 +99,8 @@ class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
     # @unittest.skip("Skipping dataloader Aqualoc test")
     def test_SingleDataLoader_aqualoc(self):
-        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","Aqualoc","Archaeological_site_sequences","1.yml")
+        test_sequence="1"
+        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","Aqualoc/Archaeological_site_sequences", test_sequence, test_sequence+".yml")
         _dset = SingleDataset(cfg_dir)
 
         i=0
@@ -134,7 +137,8 @@ class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
     # @unittest.skip("Skipping dataloader MIMIR test")
     def test_SingleDataLoader_MIMIR(self):
-        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","MIMIR","SeaFloor","track0.yml")
+        test_sequence="SeaFloor/track0"
+        cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml")
         _dset = SingleDataset(cfg_dir)
 
         i=0

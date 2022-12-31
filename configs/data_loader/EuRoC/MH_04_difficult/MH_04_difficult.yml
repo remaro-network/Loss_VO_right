@@ -7,19 +7,19 @@ image:
     height: 480                                           # image height
     width: 752                                            # image width
     ext: png                                              # image file extension for data loading
-seq: ${sequence_name}                                     # sequence to run
+seq: MH_04_difficult                                     # sequence to run
 frame_step: 1                                             # frame step
-seq_len: ${seq_len}
+seq_len: 1
 cam_mode: mono                                            # camera mode: [mono, stereo]
-resize: ${resize}
-crop_box: ${crop_box}
-grayscale: ${grayscale}
+resize: 
+crop_box: 
+grayscale: False
 
 #-------------------------------------
 #- Directories
 #-------------------------------------
 directory:
-    result_dir: ${result_directory}                       # directory to save result
-    img_seq_dir: ${dataset_directory}/${sequence_name}/mav0/cam0       # image data directory
-    gt_pose_dir: ${dataset_directory}/${sequence_name}/mav0/state_groundtruth_estimate0  # (optional) ground-truth pose data directory
-    depth_dir:                                            # (optional) external depth data, e.g. ground-truth depths
+    result_dir: ../saved/results/releVO/EuRoC/MH_04_difficult                       # directory to save result
+    img_seq_dir: /home/olaya/Datasets/EuRoC/MH_04_difficult/mav0/cam0       # image data directory
+    gt_pose_dir: /home/olaya/Datasets/EuRoC/MH_04_difficult/mav0/state_groundtruth_estimate0  # (optional) ground-truth pose data directory
+    depth_dir:                                            # (optional) external depth data, e.g. ground-truth depthsEOF

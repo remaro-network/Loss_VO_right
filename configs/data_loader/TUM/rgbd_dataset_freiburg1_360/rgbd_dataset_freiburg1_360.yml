@@ -1,13 +1,16 @@
+# This configuration corresponds to 
+# the Reference Model in the extended version.
+
 #-------------------------------------
 #- Basic setup
 #-------------------------------------
-dataset: mimir                                            # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
+dataset: tum-1                                      # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
 seed: 4869                                                # random seed
 image:
     height: 480                                           # image height
-    width: 720                                            # image width
+    width: 640                                            # image width
     ext: png                                              # image file extension for data loading
-seq: SeaFloor                                     # sequence to run
+seq: rgbd_dataset_freiburg1_360                                     # sequence to run
 frame_step:                                              # frame step
 seq_len: 1                                       # length of frame sequence 
 cam_mode: mono                                            # camera mode: [mono, stereo]
@@ -18,8 +21,13 @@ grayscale: False
 #- Directories
 #-------------------------------------
 directory:
-    result_dir: ../saved/results/releVO/MIMIR/SeaFloor/track0                       # directory to save result
-    img_seq_dir: /home/olaya/Datasets/MIMIR/SeaFloor/track0/auv0/rgb/cam0        # image data directory
-    gt_pose_dir: /home/olaya/Datasets/MIMIR/SeaFloor/track0/auv0/pose_groundtruth  # (optional) ground-truth pose data directory
+    result_dir: ../saved/results/releVO/TUM/rgbd_dataset_freiburg1_360                       # directory to save result
+    img_seq_dir: /home/olaya/Datasets/TUM       # image data directory
+    gt_pose_dir: /home/olaya/Datasets/TUM  # (optional) ground-truth pose data directory
     depth_dir:                                            # (optional) external depth data, e.g. ground-truth depths
 
+#-------------------------------------
+#- Depth
+#-------------------------------------
+depth:                                                    # Depth configuration
+    depth_src: ~

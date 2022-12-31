@@ -8,9 +8,12 @@ image:
     width: 720                                            # image width
     ext: png                                              # image file extension for data loading
 seq: ${sequence_name}                                     # sequence to run
-frame_step: 1                                             # frame step
+frame_step: ${frame_step}                                             # frame step
+seq_len: ${seq_len}                                       # length of frame sequence 
 cam_mode: mono                                            # camera mode: [mono, stereo]
-
+resize: ${resize}
+crop_box: ${crop_box}
+grayscale: ${grayscale}
 #-------------------------------------
 #- Directories
 #-------------------------------------
