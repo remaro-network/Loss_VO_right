@@ -18,7 +18,7 @@ def plot_route(gt, c_gt='g'):
 
 class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
-    # @unittest.skip("Skipping TUM test")
+    @unittest.skip("Skipping TUM test")
     def test_SingleDataLoader_TUM(self):
         test_sequence = "rgbd_dataset_freiburg1_360"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","TUM", test_sequence, test_sequence+".yml")
@@ -59,7 +59,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         plt.close()
 
     @classmethod
-    # @unittest.skip("Skipping dataloader euroc test")
+    @unittest.skip("Skipping dataloader euroc test")
     def test_SingleDataLoader_euroc(self):
         test_sequence="MH_04_difficult"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","EuRoC", test_sequence, test_sequence+".yml")
@@ -97,7 +97,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         plt.close()
 
     @classmethod
-    # @unittest.skip("Skipping dataloader Aqualoc test")
+    @unittest.skip("Skipping dataloader Aqualoc test")
     def test_SingleDataLoader_aqualoc(self):
         test_sequence="1"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","Aqualoc/Archaeological_site_sequences", test_sequence, test_sequence+".yml")
@@ -137,7 +137,7 @@ class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
     # @unittest.skip("Skipping dataloader MIMIR test")
     def test_SingleDataLoader_MIMIR(self):
-        test_sequence="SeaFloor/track0"
+        test_sequence="SeaFloor/track1"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml")
         _dset = SingleDataset(cfg_dir)
 

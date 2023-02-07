@@ -12,7 +12,7 @@ class releVOModuleTest(unittest.TestCase):
         cls._device = torch.device('cuda:0')
     
     def test_relevoForward(self):
-        model = releVO_model(batchNorm = True, checkpoint_location=["saved/models/flownet/FlowNet2_checkpoint.pth.tar"],
+        model = releVO_model(batchNorm = True, checkpoint_location=["saved/checkpoints/FlowNet2_checkpoint.pth.tar"],
                 conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],image_size = (52,80), rnn_hidden_size=1000,
                 rnn_dropout_out=.5, rnn_dropout_between=0)
         

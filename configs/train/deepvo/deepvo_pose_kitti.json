@@ -1,0 +1,92 @@
+{
+    "name": "deepvo",
+    "n_gpu": 2,
+    "arch": {
+      "type": "DeepVOModel",
+      "args": {
+        "batchNorm" : true, 
+        "conv_dropout" : [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],
+        "image_size" : [480,752],
+        "rnn_hidden_size" : 1000, 
+        "rnn_dropout_out" : 0.5, 
+        "rnn_dropout_between" : 0,
+        "checkpoint_location": [
+          "saved/checkpoints/FlowNet2_checkpoint.pth.tar"
+      ]
+      }
+    },
+    "data_loader": {
+      "type": "EIVADBMonoVODataloader",
+      "args": {
+        "dataset_dirs": [
+          "KITTISOMETHING"     
+        ],
+        "batch_size": 8,
+        "validation_split": 0,
+        "num_workers": 4,
+        "shuffle": true,
+        "frame_count": 0,
+        "pose_only": true,
+        "target_image_size": [
+          480,
+          752
+        ],
+        "use_mesh_gt" : false,
+        "seq_len_range" : [5,5]
+      }
+    },
+    "val_data_loader": {
+      "type": "EIVADBMonoVODataloader",
+      "args": {
+        "dataset_dirs": [
+            "KITTISOMETHING"   
+            ],
+        "batch_size": 8,
+        "validation_split": 0,
+        "num_workers": 4,
+        "shuffle": true,
+        "frame_count": 0,
+        "pose_only": true,
+        "target_image_size": [
+            480,
+            752
+        ],
+        "use_mesh_gt" : false,
+        "seq_len_range" : [5,5]
+      }
+    },
+    "optimizer": {
+      "type": "Adam",
+      "args": {
+        "lr": 0.001,
+        "weight_decay": 0,
+        "amsgrad": true
+      }
+    },
+    "loss": "mse_euler_pose_loss",
+    "metrics": [
+      "mse_euler_pose_metric" , "mse_euler_rotation_metric"
+    ],
+    "lr_scheduler": {
+      "type": "StepLR",
+      "args": {
+        "step_size": 65,
+        "gamma": 0.1
+      }
+    },
+    "trainer": {
+      "compute_mask": false,
+      "compute_stereo_pred": false,
+      "epochs": 200,
+      "save_dir": "saved/kitti/",
+      "save_period": 1,
+      "verbosity": 2,
+      "log_step": 4800,
+      "val_log_step": 40,
+      "alpha": 0.5,
+      "max_distance": 80,
+      "monitor": "min mse_metric",
+      "timestamp_replacement": "00",
+      "tensorboard": true
+    }
+  }
