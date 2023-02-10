@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from data_loader.data_loaders import SingleDataset
+from torch.utils.data import Dataset, DataLoader
 
 def plot_route(gt, c_gt='g'):    
 
@@ -139,14 +140,15 @@ class TestDatabaseDataloader(unittest.TestCase):
     def test_SingleDataLoader_MIMIR(self):
         test_sequence="SeaFloor/track1"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml")
-        _dset = SingleDataset(cfg_dir)
+        _dset = DataLoader(SingleDataset(cfg_dir),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 
         i=0
         T_target_prev = list()  
 
-        for d in tqdm(_dset):
+        for index,d in tqdm(enumerate(_dset), total=len(_dset)):
             # plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
             if d["poses"] is not None:
+                print(d["poses"][0].shape)
                 H_kf0_kf1 = d["poses"][0]
                 if i ==0:
                     T_target_prev.append(H_kf0_kf1)
@@ -162,9 +164,9 @@ class TestDatabaseDataloader(unittest.TestCase):
 
                 plt.pause(0.005)
 
-        # plt.show(block=False)
-        # plt.pause(.003)
-        # plt.close()
+        plt.show(block=False)
+        plt.pause(.003)
+        plt.close()
 
         plot_route(T_target_prev, c_gt='g')
         plt.show()

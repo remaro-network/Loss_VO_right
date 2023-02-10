@@ -51,6 +51,8 @@ class MultiDataset(Dataset):
         for dataset in self.datasets:
             sum += len(dataset)
         return sum
+
+
 class SingleDataset(Dataset):
     """ loads a single sequence as data set"""    
     def __init__(self, cfg):  
@@ -134,15 +136,18 @@ class SingleDataset(Dataset):
         data = {
             "keyframe": keyframe, # the reference image
             "keyframe_pose": torch.eye(4, dtype=torch.float32), # always identity
-            "keyframe_intrinsics": self.intrinsics,
+            "keyframe_intrinsics": torch.tensor(self.intrinsics).to(dtype=torch.float32),
             "frames": frames, # (ordered) neighboring images
             "poses": frame_rel_gts, # H_ref_src
-            "intrinsics": self.intrinsics,
-            "image_id": index
+            "intrinsics": torch.tensor(self.intrinsics).to(dtype=torch.float32),
+            "image_id": torch.tensor(index)
         }
+        if None in data.values():
+            raise IndexError
+
         return data
 
 
     def __len__(self) -> int:
-        return len(self.dataset.rgb_d_pose_pair)
+        return len(self.dataset.rgb_d_pose_pair)-self.cfg.seq_len
         

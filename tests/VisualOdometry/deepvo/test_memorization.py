@@ -8,8 +8,9 @@ import numpy as np
 from model.deepvo.deepvo_model import DeepVOModel
 from model.loss_functions.pose_losses import mse_euler_pose_loss
 from model.metric_functions.vo_metrics import mse_euler_pose_metric, mse_euler_rotation_metric
-from trainer.deepvo_trainer import to
+from trainer.deepvo_trainer import to_device
 from data_loader.data_loaders import SingleDataset
+from torch.utils.data import DataLoader
 
 class DeepVOModuleTest(unittest.TestCase):
     @classmethod
@@ -20,15 +21,15 @@ class DeepVOModuleTest(unittest.TestCase):
 
         test_sequence="SeaFloor/track1"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml")
-        cls._dataloader = SingleDataset(cfg_dir)
+        cls._dataloader = DataLoader(SingleDataset(cfg_dir),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 
     def test_deepvoForward(self):
         model = DeepVOModel(batchNorm = True, checkpoint_location=["saved/checkpoints/FlowNet2_checkpoint.pth.tar"],
-                conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],image_size = (52,80), rnn_hidden_size=1000,
+                conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],image_size = (480,720), rnn_hidden_size=1000,
                 rnn_dropout_out=.5, rnn_dropout_between=0)
         
         data_dict = next(iter(self._dataloader))
-        data_dict = to(data_dict, self._device)
+        data_dict = to_device(data_dict, self._device)
         model.to(self._device)
         out = model(data_dict)
         loss_dict = mse_euler_pose_loss(out)

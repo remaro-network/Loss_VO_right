@@ -9,7 +9,7 @@ image:
     ext: png                                              # image file extension for data loading
 seq: SeaFloor                                     # sequence to run
 frame_step:                                              # frame step
-seq_len: 1                                       # length of frame sequence 
+seq_len: 4                                       # length of frame sequence 
 cam_mode: mono                                            # camera mode: [mono, stereo]
 resize: 
 crop_box: 

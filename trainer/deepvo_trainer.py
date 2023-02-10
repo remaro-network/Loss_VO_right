@@ -4,11 +4,11 @@ import operator
 from utils.util import map_fn, operator_on_dict
 from trainer.trainer import Trainer
 
-def to(data, device):
+def to_device(data, device):
     if isinstance(data, dict):
-        return {k: to(data[k], device) for k in data.keys()}
+        return {k: to_device(data[k], device) for k in data.keys()}
     elif isinstance(data, list):
-        return [to(v, device) for v in data]
+        return [to_device(v, device) for v in data]
     else:
         return data.to(device)
 class DeepVOTrainer(Trainer):
