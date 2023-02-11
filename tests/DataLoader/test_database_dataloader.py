@@ -148,7 +148,6 @@ class TestDatabaseDataloader(unittest.TestCase):
         for index,d in tqdm(enumerate(_dset), total=len(_dset)):
             # plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
             if d["poses"] is not None:
-                print(d["poses"][0].shape)
                 H_kf0_kf1 = d["poses"][0]
                 if i ==0:
                     T_target_prev.append(H_kf0_kf1)
