@@ -6,11 +6,11 @@ from model.metric_functions.vo_metrics import mse_metric
 
 def mse_euler_pose_loss(data_dict):
     ''' Loss function for euler angles. Note:
-    data_dict["result"] is a tensor with shape (batch x sequence_len+1 x 6)
-    data_dict["poses"] is a list with len = sequence_len+1, each element in list
+    data_dict["result"] is a tensor with shape (batch x sequence_len x 6)
+    data_dict["poses"] is a list with len = sequence_len, each element in list
     is a tensor with shape (batch x (4x4))'''
-    estimate = data_dict["result"] 
-    target = data_dict["poses"] # list of seq with (batch, 4x4)
+    estimate = data_dict["result"] # 1,1,6 - 1,3,6 
+    target = data_dict["poses"] # list of seq with (batch, 4x4) 1(1x(4,4)) - 3(1x(4,4))
     
     seq_len = estimate.size()[1] # (batch, seq, dim_pose)
     
@@ -18,7 +18,7 @@ def mse_euler_pose_loss(data_dict):
     sequence_loss = 0.
     sequence_rotation_loss = 0.
     sequence_pos_loss = 0.
-    for i in range (1,seq_len): # relative T, we don take first frame in seq
+    for i in range (0,seq_len): # relative T, we don take first frame in seq
         # preprocessing target values
         R_kf_i = target[i][:, :3, :3]
         R_size = R_kf_i.size()
