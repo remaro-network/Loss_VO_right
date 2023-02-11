@@ -3,7 +3,7 @@ import torch
 import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from data_loader.data_loaders import SingleDataset
+from data_loader.data_loaders import SingleDataset, MultiDataset
 from torch.utils.data import Dataset, DataLoader
 
 def plot_route(gt, c_gt='g'):    
@@ -136,7 +136,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         plt.close()
 
     @classmethod
-    # @unittest.skip("Skipping dataloader MIMIR test")
+    @unittest.skip("Skipping dataloader MIMIR test")
     def test_SingleDataLoader_MIMIR(self):
         test_sequence="SeaFloor/track1"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml")
@@ -174,6 +174,46 @@ class TestDatabaseDataloader(unittest.TestCase):
         plt.pause(3)
         plt.close()
 
+
+    @classmethod
+    # @unittest.skip("Skipping dataloader MIMIR test")
+    def test_MultiDataLoader_MIMIR(self):
+        test_sequences=["SeaFloor/track0", "SeaFloor/track1"]
+        cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in test_sequences]
+        # _dsets = [Dataset(cfg_dir) for cfg_dir in cfg_dirs]
+        _dset = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+
+        i=0
+        T_target_prev = list()  
+
+        for index,d in tqdm(enumerate(_dset), total=len(_dset)):
+            # plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
+            if d["poses"] is not None:
+                print(d["poses"][0].shape)
+                H_kf0_kf1 = d["poses"][0]
+                if i ==0:
+                    T_target_prev.append(H_kf0_kf1)
+                    i += 1 
+                    continue # in first it go to next frame to retrieve rel pose
+                # Absolute values
+                H_0_kf0 = T_target_prev[-1]
+                H_0_kf1 =torch.matmul(H_0_kf0,H_kf0_kf1)
+                
+                T_target_prev.append(H_0_kf1)
+                
+                i += 1 
+
+                plt.pause(0.005)
+
+        plt.show(block=False)
+        plt.pause(.003)
+        plt.close()
+
+        plot_route(T_target_prev, c_gt='g')
+        plt.show()
+        plt.show(block=False) # uncomment if you want it to auto close
+        plt.pause(3)
+        plt.close()
 
 
 if __name__ == '__main__':
