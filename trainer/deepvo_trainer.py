@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import os
 import operator
 from utils.util import map_fn, operator_on_dict
 from model.deepvo.deepvo_model import DeepVOModel
@@ -24,7 +25,10 @@ class DeepVOTrainer(object):
 		self.model = DeepVOModel(batchNorm=model_args.batchNorm,checkpoint_location=model_args.checkpoint_location,
 									conv_dropout=model_args.conv_dropout, rnn_hidden_size=model_args.rnn_hidden_size,
 									rnn_dropout_out=model_args.rnn_dropout_out,rnn_dropout_between=model_args.rnn_dropout_between)
-		self.data_loader = DataLoader(MultiDataset(data_loader.dataset_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+        
+		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
+
+		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 
 	def _train_epoch(self,epoch):
 		''' train logic per epoch 
