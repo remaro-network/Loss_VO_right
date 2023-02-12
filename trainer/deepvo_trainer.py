@@ -2,6 +2,9 @@ import torch
 import numpy as np
 import operator
 from utils.util import map_fn, operator_on_dict
+from model.deepvo.deepvo_model import DeepVOModel
+from data_loader.data_loaders import SingleDataset, MultiDataset
+from torch.utils.data import DataLoader
 from trainer.trainer import Trainer
 
 def to_device(data, device):
@@ -11,20 +14,33 @@ def to_device(data, device):
         return [to_device(v, device) for v in data]
     else:
         return data.to(device)
-class DeepVOTrainer(Trainer):
-	def __init__(self, model, loss, metrics, optimizer, config, data_loader, valid_data_loader=None, lr_scheduler=None, options=...):
-		super().__init__(model, loss, metrics, optimizer, config, data_loader, valid_data_loader, lr_scheduler, options)
-	
+
+class DeepVOTrainer(object):
+	# def __init__(self, model, loss, metrics, optimizer, config, data_loader, valid_data_loader=None, lr_scheduler=None, options=...):
+	# 	super().__init__(model, loss, metrics, optimizer, config, data_loader, valid_data_loader, lr_scheduler, options)
+	def __init__(self, data_loader, model_args):
+		# super().__init__(**kwargs)
+
+		self.model = DeepVOModel(batchNorm=model_args.batchNorm,checkpoint_location=model_args.checkpoint_location,
+									conv_dropout=model_args.conv_dropout, rnn_hidden_size=model_args.rnn_hidden_size,
+									rnn_dropout_out=model_args.rnn_dropout_out,rnn_dropout_between=model_args.rnn_dropout_between)
+		self.data_loader = DataLoader(MultiDataset(data_loader.dataset_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+
 	def _train_epoch(self,epoch):
 		''' train logic per epoch 
 		'''
 		total_loss = 0
 		total_loss_dict = {}
 		total_metrics = np.zeros(len(self.metrics))
+
+		
 		self.model.train()
+
+
+
 		for batch_idx, data in enumerate(self.data_loader):
 			# Every data instance is a pair of input data + target result
-			data = to(data, self.device)
+			data = to_device(data, self.device)
 			
 			# Gradients must be zeroed for every batch
 			self.optimizer.zero_grad()
@@ -91,7 +107,7 @@ class DeepVOTrainer(Trainer):
 		with torch.no_grad():
 			for batch_idx, data in enumerate(self.valid_data_loader):
 				# Every data instance is a pair of input data + target result
-				data = to(data, self.device)
+				data = to_device(data, self.device)
 
 				# Make predictions for this batch
 				outputs = self.model(data)
