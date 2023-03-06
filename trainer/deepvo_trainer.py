@@ -19,28 +19,39 @@ def to_device(data, device):
 class DeepVOTrainer(object):
 	# def __init__(self, model, loss, metrics, optimizer, config, data_loader, valid_data_loader=None, lr_scheduler=None, options=...):
 	# 	super().__init__(model, loss, metrics, optimizer, config, data_loader, valid_data_loader, lr_scheduler, options)
-	def __init__(self, data_loader, model_args):
+	def __init__(self, data_loader, model_args, config):
 		# super().__init__(**kwargs)
+		self.device = config.n_gpu
 
 		self.model = DeepVOModel(batchNorm=model_args.batchNorm,checkpoint_location=model_args.checkpoint_location,
-									conv_dropout=model_args.conv_dropout, rnn_hidden_size=model_args.rnn_hidden_size,
+									conv_dropout=model_args.conv_dropout, image_size = config.model.args.image_size, rnn_hidden_size=model_args.rnn_hidden_size,
 									rnn_dropout_out=model_args.rnn_dropout_out,rnn_dropout_between=model_args.rnn_dropout_between)
+		self.model.to(self.device)
+		self.trainer_args = config.trainer
+		self.metrics = self.trainer_args.metrics
+
+		self.optimizer = getattr(torch.optim,config.optimizer['type'])(self.model.parameters(),**config.optimizer.args)
+
+		self.device = config.n_gpu
         
 		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
 
 		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+	
+	def train(self):
+		'''
+		Full training logic
+		'''
+		not_improved_count = 0
+		for epoch in range(self.trainer_args.epochs):
+			result = self.train_epoch(epoch)
 
-	def _train_epoch(self,epoch):
+	def train_epoch(self,epoch):
 		''' train logic per epoch 
 		'''
 		total_loss = 0
 		total_loss_dict = {}
-		total_metrics = np.zeros(len(self.metrics))
-
-		
-		self.model.train()
-
-
+		total_metrics = np.zeros(len(self.metrics))		
 
 		for batch_idx, data in enumerate(self.data_loader):
 			# Every data instance is a pair of input data + target result
