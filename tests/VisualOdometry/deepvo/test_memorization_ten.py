@@ -34,9 +34,7 @@ class DeepVOModuleTest(unittest.TestCase):
         cls.optimizer = getattr(torch.optim,config.optimizer['type'])(cls.model.parameters(),**config.optimizer.args)
         # Data loader
         cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.data_loader.dataset_dirs]
-        cls.data_loader = DataLoader(SingleDataset(cfg_dirs[0]),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
-        # cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.data_loader.dataset_dirs]
-        # cls.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+        cls.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 
     def test_10epochDeepvoMemorization(self):
         for epoch in range(10):

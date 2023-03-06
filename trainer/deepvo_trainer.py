@@ -3,10 +3,12 @@ import numpy as np
 import os
 import operator
 from utils.util import map_fn, operator_on_dict
+from model.loss_functions import pose_losses
 from model.deepvo.deepvo_model import DeepVOModel
 from data_loader.data_loaders import SingleDataset, MultiDataset
 from torch.utils.data import DataLoader
 from trainer.trainer import Trainer
+from logger import TensorboardWriter
 
 def to_device(data, device):
     if isinstance(data, dict):
@@ -22,20 +24,22 @@ class DeepVOTrainer(object):
 	def __init__(self, data_loader, model_args, config):
 		# super().__init__(**kwargs)
 		self.device = config.n_gpu
-
+		# Model setup
 		self.model = DeepVOModel(batchNorm=model_args.batchNorm,checkpoint_location=model_args.checkpoint_location,
 									conv_dropout=model_args.conv_dropout, image_size = config.model.args.image_size, rnn_hidden_size=model_args.rnn_hidden_size,
 									rnn_dropout_out=model_args.rnn_dropout_out,rnn_dropout_between=model_args.rnn_dropout_between)
 		self.model.to(self.device)
+		# Loss config
+		self.loss_cfg = config.loss
+		# Trainer config
 		self.trainer_args = config.trainer
 		self.metrics = self.trainer_args.metrics
-
+		# Optimizer
 		self.optimizer = getattr(torch.optim,config.optimizer['type'])(self.model.parameters(),**config.optimizer.args)
-
-		self.device = config.n_gpu
-        
+        # Writer
+		self.writer = TensorboardWriter(config.log_dir,config.trainer.verbosity,config.trainer.tensorboard)
+		# Data loader
 		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
-
 		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 	
 	def train(self):
@@ -52,6 +56,7 @@ class DeepVOTrainer(object):
 		total_loss = 0
 		total_loss_dict = {}
 		total_metrics = np.zeros(len(self.metrics))		
+		lossfcn = getattr(pose_losses, self.loss_cfg)
 
 		for batch_idx, data in enumerate(self.data_loader):
 			# Every data instance is a pair of input data + target result
@@ -64,7 +69,7 @@ class DeepVOTrainer(object):
 			outputs = self.model(data)
 
 			# Compute the loss and its gradients
-			loss_dict = self.loss(outputs)
+			loss_dict = lossfcn(outputs)
 			loss_dict = map_fn(loss_dict, torch.mean) # if loss dict, average losses
 			loss = loss_dict["loss"]
    
@@ -82,7 +87,7 @@ class DeepVOTrainer(object):
 				self.writer.add_scalar(f"loss_{loss_component}", v.item())
 
 			total_loss += loss.item()
-			total_loss_dict = operator_on_dict(total_loss_dict, loss_dict, operator.add)
+			total_loss_dict = operator_on_dict(total_loss_dict, loss_dict, lambda x, y: x + y)
 			metrics, valid = self._eval_metrics(outputs, training=True)
 			total_metrics += metrics
 
