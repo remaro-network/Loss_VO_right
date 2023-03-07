@@ -8,7 +8,7 @@ from model.deepvo.deepvo_model import DeepVOModel
 from data_loader.data_loaders import SingleDataset, MultiDataset
 from torch.utils.data import DataLoader
 from trainer.trainer import Trainer
-from logger import TensorboardWriter
+from base.logger import VOLogger
 
 def to_device(data, device):
     if isinstance(data, dict):
@@ -19,10 +19,8 @@ def to_device(data, device):
         return data.to(device)
 
 class DeepVOTrainer(object):
-	# def __init__(self, model, loss, metrics, optimizer, config, data_loader, valid_data_loader=None, lr_scheduler=None, options=...):
-	# 	super().__init__(model, loss, metrics, optimizer, config, data_loader, valid_data_loader, lr_scheduler, options)
 	def __init__(self, data_loader, model_args, config):
-		# super().__init__(**kwargs)
+
 		self.device = config.n_gpu
 		# Model setup
 		self.model = DeepVOModel(batchNorm=model_args.batchNorm,checkpoint_location=model_args.checkpoint_location,
@@ -37,11 +35,15 @@ class DeepVOTrainer(object):
 		# Optimizer
 		self.optimizer = getattr(torch.optim,config.optimizer['type'])(self.model.parameters(),**config.optimizer.args)
         # Writer
-		self.writer = TensorboardWriter(config.log_dir,config.trainer.verbosity,config.trainer.tensorboard)
+		self.writer = VOLogger(log_dir=config.log_dir, log_step=config.log_step)
 		# Data loader
 		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
 		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
-	
+
+		self.len_epoch = len(self.data_loader)
+		# Model checkpoint saving
+		self.checkpoint_dir = config.trainer.save_dir
+
 	def train(self):
 		'''
 		Full training logic
@@ -49,9 +51,11 @@ class DeepVOTrainer(object):
 		not_improved_count = 0
 		for epoch in range(self.trainer_args.epochs):
 			result = self.train_epoch(epoch)
+			self.save_checkpoint(epoch)
 
 	def train_epoch(self,epoch):
-		''' train logic per epoch 
+		''' 
+		Train logic per epoch 
 		'''
 		total_loss = 0
 		total_loss_dict = {}
@@ -80,44 +84,40 @@ class DeepVOTrainer(object):
 
 			loss_dict = map_fn(loss_dict, torch.detach)
 
-			self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
-
-			self.writer.add_scalar('loss', loss.item())
-			for loss_component, v in loss_dict.items():
-				self.writer.add_scalar(f"loss_{loss_component}", v.item())
-
 			total_loss += loss.item()
 			total_loss_dict = operator_on_dict(total_loss_dict, loss_dict, lambda x, y: x + y)
-			metrics, valid = self._eval_metrics(outputs, training=True)
-			total_metrics += metrics
+			self.writer.log_dictionary(total_loss_dict,len(self.data_loader),batch_idx,epoch)
 
-			if self.writer.step % self.log_step == 0:
-				img_count = min(outputs["keyframe"].shape[0], 8)
-
-				self.logger.debug('Train Epoch: {} {} Loss: {:.6f} Loss_dict: {}'.format(
-					epoch,
-					self._progress(batch_idx),
-					loss.item(),
-					loss_dict))
+			# metrics, valid = self._eval_metrics(outputs, training=True)
+			# total_metrics += metrics
+			
+			
 
 			if batch_idx == self.len_epoch:
 				break
 
-		log = {
-			'loss': total_loss / self.len_epoch,
-			'metrics': (total_metrics / self.len_epoch).tolist()
-		}
-		for loss_component, v in total_loss_dict.items():
-			log[f"loss_{loss_component}"] = v.item() / self.len_epoch
 
-		if self.do_validation:
-			val_log = self._valid_epoch(epoch)
-			log.update(val_log)
+		# if self.do_validation:
+		# 	val_log = self._valid_epoch(epoch)
+			# log.update(val_log)
 
 		if self.lr_scheduler is not None:
 			self.lr_scheduler.step()
 
-		return log
+	def save_checkpoint(self, epoch):
+		arch = type(self.model).__name__
+		state = {
+			'arch': arch,
+			'epoch': epoch,
+			'model_state_dict': self.model.state_dict(),
+			'optimizer_state_dict': self.optimizer.state_dict()
+		}
+		filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-epoch{}.pth'.format(epoch))
+		print('saving checkpoint in ',filename)
+		torch.save(state,filename)
+
+
+
 
 	def _valid_epoch(self, epoch):
 		total_val_loss = 0

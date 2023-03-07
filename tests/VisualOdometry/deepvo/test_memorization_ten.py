@@ -11,7 +11,9 @@ from model.metric_functions.vo_metrics import mse_euler_pose_metric, mse_euler_r
 from trainer.deepvo_trainer import to_device
 from data_loader.data_loaders import SingleDataset, MultiDataset
 from torch.utils.data import DataLoader
+from base.logger import VOLogger
 from utils.loadconfig import ConfigLoader
+
 
 class DeepVOModuleTest(unittest.TestCase):
     @classmethod
@@ -30,11 +32,15 @@ class DeepVOModuleTest(unittest.TestCase):
         # Trainer config
         cls.trainer_args = config.trainer
         cls.metrics = cls.trainer_args.metrics
+        # Writer
+        cls.writer = VOLogger(log_dir=config.log_dir, log_step=config.log_step)
         # Optimizer
         cls.optimizer = getattr(torch.optim,config.optimizer['type'])(cls.model.parameters(),**config.optimizer.args)
         # Data loader
         cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.data_loader.dataset_dirs]
         cls.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+        # Model checkpoint saving
+        cls.checkpoint_dir = config.trainer.save_dir
 
     def test_10epochDeepvoMemorization(self):
         for epoch in range(10):
@@ -69,16 +75,24 @@ class DeepVOModuleTest(unittest.TestCase):
                 total_loss += loss.item()
                 total_loss_dict = operator_on_dict(total_loss_dict, loss_dict, lambda x, y: x + y)
 
+                
+                self.writer.log_dictionary(total_loss_dict,len(self.data_loader),batch_idx,epoch)
+
+
+
                 if batch_idx == 10:
                     break
 
-            log = {
-                'loss': total_loss / 10,
+            arch = type(self.model).__name__
+            state = {
+                'arch': arch,
+                'epoch': epoch,
+                'model_state_dict': self.model.state_dict(),
+                'optimizer_state_dict': self.optimizer.state_dict()
             }
-            for loss_component, v in total_loss_dict.items():
-                log[f"loss_{loss_component}"] = v.item() / 10
-
-            print(log)
+            filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-epoch{}.pth'.format(epoch))
+            print('saving checkpoint in ',filename)
+            torch.save(state,filename)
 
 
         
