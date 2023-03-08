@@ -6,7 +6,8 @@ class VOLogger():
         self.writer = SummaryWriter(log_dir=log_dir)
         self.log_step = log_step
 
-    def log_dictionary(self, loss_dict, data_size, batch_idx, epoch):
+    def log_dictionary(self, loss_dict, data_size, batch_idx, epoch, dictionary_str):
+        loss_dict = {dictionary_str+'_'+key : value for key, value in loss_dict.items()}
         if batch_idx % self.log_step:
             for loss_name, loss_value in loss_dict.items():
                 self.writer.add_scalar(loss_name,loss_value,epoch*data_size + batch_idx)

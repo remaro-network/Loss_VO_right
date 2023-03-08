@@ -40,19 +40,60 @@ class DeepVOTrainer(object):
 		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
 		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 
-		self.len_epoch = len(self.data_loader)
+		self.len_epoch = self.trainer_args.epochs
+		# Validation
+		self.validation = config.validation.do_validation
+		if self.validation:
+			cfg_dirs_validation = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.validation.sequences]
+			self.validation_data_loader = DataLoader(MultiDataset(cfg_dirs_validation),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 		# Model checkpoint saving
 		self.checkpoint_dir = config.trainer.save_dir
+		self.checkpoint_period = config.trainer.save_period
 
 	def train(self):
 		'''
 		Full training logic
 		'''
 		not_improved_count = 0
-		for epoch in range(self.trainer_args.epochs):
+		for epoch in range(self.len_epoch):
 			result = self.train_epoch(epoch)
-			self.save_checkpoint(epoch)
+			if self.validation:
+				self.validation_epoch(epoch)
+			self.save_checkpoint(epoch)               
 
+	def validation_epoch(self,epoch):
+		total_val_loss = 0
+		total_val_loss_dict = {}
+		total_val_metrics = np.zeros(len(self.metrics))		
+		val_lossfcn = getattr(pose_losses, self.loss_cfg)
+		# Set validation mode
+		self.model.eval()
+		with torch.no_grad():
+			for batch_idx, data in enumerate(self.validation_data_loader):
+				# Every data instance is a pair of input data + target result
+				data = to_device(data, self.device)
+
+				# Make predictions for this batch
+				outputs = self.model(data)
+
+				# Compute the loss 
+				loss_dict = val_lossfcn(outputs)
+				loss_dict = map_fn(loss_dict, torch.mean) # if loss dict, average losses
+				loss = loss_dict["loss"]
+
+				loss_dict = map_fn(loss_dict, torch.detach)
+
+				total_val_loss += loss.item()
+				total_val_loss_dict = operator_on_dict(total_val_loss_dict, loss_dict, lambda x, y: x + y)
+				self.writer.log_dictionary(total_val_loss_dict,len(self.validation_data_loader),batch_idx,epoch, 'validation')
+				
+				
+
+				if batch_idx == self.len_epoch:
+					break
+
+		return 
+	
 	def train_epoch(self,epoch):
 		''' 
 		Train logic per epoch 
@@ -61,7 +102,8 @@ class DeepVOTrainer(object):
 		total_loss_dict = {}
 		total_metrics = np.zeros(len(self.metrics))		
 		lossfcn = getattr(pose_losses, self.loss_cfg)
-
+		# set training mode
+		self.model.train()
 		for batch_idx, data in enumerate(self.data_loader):
 			# Every data instance is a pair of input data + target result
 			data = to_device(data, self.device)
@@ -86,7 +128,7 @@ class DeepVOTrainer(object):
 
 			total_loss += loss.item()
 			total_loss_dict = operator_on_dict(total_loss_dict, loss_dict, lambda x, y: x + y)
-			self.writer.log_dictionary(total_loss_dict,len(self.data_loader),batch_idx,epoch)
+			self.writer.log_dictionary(total_loss_dict,len(self.data_loader),batch_idx,epoch, 'train')
 
 			# metrics, valid = self._eval_metrics(outputs, training=True)
 			# total_metrics += metrics
@@ -101,20 +143,21 @@ class DeepVOTrainer(object):
 		# 	val_log = self._valid_epoch(epoch)
 			# log.update(val_log)
 
-		if self.lr_scheduler is not None:
-			self.lr_scheduler.step()
+		# if self.lr_scheduler is not None:
+		# 	self.lr_scheduler.step()
 
 	def save_checkpoint(self, epoch):
-		arch = type(self.model).__name__
-		state = {
-			'arch': arch,
-			'epoch': epoch,
-			'model_state_dict': self.model.state_dict(),
-			'optimizer_state_dict': self.optimizer.state_dict()
-		}
-		filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-epoch{}.pth'.format(epoch))
-		print('saving checkpoint in ',filename)
-		torch.save(state,filename)
+		if epoch % self.checkpoint_period:
+			arch = type(self.model).__name__
+			state = {
+				'arch': arch,
+				'epoch': epoch,
+				'model_state_dict': self.model.state_dict(),
+				'optimizer_state_dict': self.optimizer.state_dict()
+			}
+			filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-epoch{}.pth'.format(epoch))
+			print('saving checkpoint in ',filename)
+			torch.save(state,filename)
 
 
 

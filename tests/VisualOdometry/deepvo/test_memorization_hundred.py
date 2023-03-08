@@ -39,17 +39,15 @@ class DeepVOModuleTest(unittest.TestCase):
         # Data loader
         cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.data_loader.dataset_dirs]
         cls.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
-        # Model checkpoint saving
-        cls.checkpoint_dir = config.trainer.save_dir
 
     def test_10epochDeepvoMemorization(self):
-        for epoch in range(10):
+        for epoch in range(100):
             total_loss = 0
             total_loss_dict = {}
             total_metrics = np.zeros(len(self.metrics))	
 
             lossfcn = getattr(pose_losses, self.loss_cfg)
-
+            self.model.train()
             for batch_idx, data in enumerate(self.data_loader):
                 # Every data instance is a pair of input data + target result
                 data = to_device(data, self.device)
@@ -62,7 +60,6 @@ class DeepVOModuleTest(unittest.TestCase):
 
                 # Compute the loss and its gradients
                 loss_dict = lossfcn(outputs)
-                print(loss_dict)
                 loss_dict = map_fn(loss_dict, torch.mean) # if loss dict, average losses
                 loss = loss_dict["loss"]
     
@@ -76,23 +73,20 @@ class DeepVOModuleTest(unittest.TestCase):
                 total_loss += loss.item()
                 total_loss_dict = operator_on_dict(total_loss_dict, loss_dict, lambda x, y: x + y)
 
-                # print(total_loss_dict)
                 self.writer.log_dictionary(total_loss_dict,len(self.data_loader),batch_idx,epoch,'train')
 
 
-                if batch_idx == 10:
+
+                if batch_idx == 100:
                     break
 
-            arch = type(self.model).__name__
-            state = {
-                'arch': arch,
-                'epoch': epoch,
-                'model_state_dict': self.model.state_dict(),
-                'optimizer_state_dict': self.optimizer.state_dict()
-            }
-            filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-epoch{}.pth'.format(epoch))
-            print('saving checkpoint in ',filename)
-            torch.save(state,filename)
+            # log = {
+            #     'loss': total_loss / 10,
+            # }
+            # for loss_component, v in total_loss_dict.items():
+            #     log[f"loss_{loss_component}"] = v.item() / 10
+
+            # print(log)
 
 
         
