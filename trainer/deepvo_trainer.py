@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import os
 import operator
+from tqdm import tqdm
 from utils.util import map_fn, operator_on_dict
 from model.loss_functions import pose_losses
 from model.deepvo.deepvo_model import DeepVOModel
@@ -37,29 +38,42 @@ class DeepVOTrainer(object):
         # Writer
 		self.writer = VOLogger(log_dir=config.log_dir, log_step=config.log_step)
 		# Data loader
+		self.batch_size = config.data_loader.batch_size
 		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
-		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
 
 		self.len_epoch = self.trainer_args.epochs
 		# Validation
 		self.validation = config.validation.do_validation
 		if self.validation:
 			cfg_dirs_validation = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.validation.sequences]
-			self.validation_data_loader = DataLoader(MultiDataset(cfg_dirs_validation),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+			self.validation_data_loader = DataLoader(MultiDataset(cfg_dirs_validation),batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
 		# Model checkpoint saving
 		self.checkpoint_dir = config.trainer.save_dir
 		self.checkpoint_period = config.trainer.save_period
+
+		
 
 	def train(self):
 		'''
 		Full training logic
 		'''
 		not_improved_count = 0
-		for epoch in range(self.len_epoch):
-			result = self.train_epoch(epoch)
+		best_valid_loss=float('inf')
+		is_best = False
+
+		for epoch in range(1,self.len_epoch+1):
+			train_log = self.train_epoch(epoch)
 			if self.validation:
-				self.validation_epoch(epoch)
-			self.save_checkpoint(epoch)               
+				val_log = self.validation_epoch(epoch)
+				if val_log["loss"] < best_valid_loss:
+					self.best_valid_loss = val_log["loss"]
+					print(f"\nBest validation loss: {best_valid_loss}")
+					print(f"\nSaving best model for epoch: {epoch+1}\n")
+					is_best = True
+					self.save_checkpoint(epoch,is_best)   
+					
+			self.save_checkpoint(epoch,is_best)               
 
 	def validation_epoch(self,epoch):
 		total_val_loss = 0
@@ -69,7 +83,7 @@ class DeepVOTrainer(object):
 		# Set validation mode
 		self.model.eval()
 		with torch.no_grad():
-			for batch_idx, data in enumerate(self.validation_data_loader):
+			for batch_idx, data in tqdm(enumerate(self.validation_data_loader)):
 				# Every data instance is a pair of input data + target result
 				data = to_device(data, self.device)
 
@@ -87,24 +101,27 @@ class DeepVOTrainer(object):
 				total_val_loss_dict = operator_on_dict(total_val_loss_dict, loss_dict, lambda x, y: x + y)
 				self.writer.log_dictionary(total_val_loss_dict,len(self.validation_data_loader),batch_idx,epoch, 'validation')
 				
-				
+		# Get average loss per epoch
+		log_loss = {}
+		for loss_key, loss_value in total_val_loss_dict.items():
+			log_loss[loss_key] = loss_value.item()/batch_idx
+		self.writer.log_epoch(log_loss,len(self.data_loader),batch_idx,epoch, 'validation_epoch')
+		return log_loss				
 
-				if batch_idx == self.len_epoch:
-					break
-
-		return 
+				# if batch_idx == self.len_epoch:
+				# 	break
 	
 	def train_epoch(self,epoch):
 		''' 
 		Train logic per epoch 
 		'''
-		total_loss = 0
-		total_loss_dict = {}
+		total_batch_loss = 0
+		total_batch_loss_dict = {}
 		total_metrics = np.zeros(len(self.metrics))		
 		lossfcn = getattr(pose_losses, self.loss_cfg)
 		# set training mode
 		self.model.train()
-		for batch_idx, data in enumerate(self.data_loader):
+		for batch_idx, data in tqdm(enumerate(self.data_loader),total=len(self.data_loader)):
 			# Every data instance is a pair of input data + target result
 			data = to_device(data, self.device)
 			
@@ -116,27 +133,33 @@ class DeepVOTrainer(object):
 
 			# Compute the loss and its gradients
 			loss_dict = lossfcn(outputs)
-			loss_dict = map_fn(loss_dict, torch.mean) # if loss dict, average losses
+			# loss_dict = map_fn(loss_dict, torch.mean) # if loss dict, average losses
 			loss = loss_dict["loss"]
    
 			loss.backward()
-
 			# Adjust learning weights
 			self.optimizer.step()
 
 			loss_dict = map_fn(loss_dict, torch.detach)
 
-			total_loss += loss.item()
-			total_loss_dict = operator_on_dict(total_loss_dict, loss_dict, lambda x, y: x + y)
-			self.writer.log_dictionary(total_loss_dict,len(self.data_loader),batch_idx,epoch, 'train')
+			total_batch_loss += loss
+			total_batch_loss_dict = operator_on_dict(total_batch_loss_dict, loss_dict, lambda x, y: x + y)
+			self.writer.log_dictionary(total_batch_loss_dict,len(self.data_loader),batch_idx,epoch, 'train_batch')
 
+		# Get average loss per epoch
+		log_loss = {}
+		for loss_key, loss_value in total_batch_loss_dict.items():
+			log_loss[loss_key] = loss_value.item()/batch_idx
+
+		self.writer.log_epoch(log_loss,len(self.data_loader),batch_idx,epoch, 'train_epoch')
+		return log_loss
 			# metrics, valid = self._eval_metrics(outputs, training=True)
 			# total_metrics += metrics
 			
 			
 
-			if batch_idx == self.len_epoch:
-				break
+			# if batch_idx == self.len_epoch:
+			# 	break
 
 
 		# if self.do_validation:
@@ -146,18 +169,20 @@ class DeepVOTrainer(object):
 		# if self.lr_scheduler is not None:
 		# 	self.lr_scheduler.step()
 
-	def save_checkpoint(self, epoch):
-		if epoch % self.checkpoint_period:
-			arch = type(self.model).__name__
-			state = {
-				'arch': arch,
-				'epoch': epoch,
-				'model_state_dict': self.model.state_dict(),
-				'optimizer_state_dict': self.optimizer.state_dict()
-			}
-			filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-epoch{}.pth'.format(epoch))
-			print('saving checkpoint in ',filename)
-			torch.save(state,filename)
+	def save_checkpoint(self, epoch, is_best):
+		arch = type(self.model).__name__
+		state = {
+			'arch': arch,
+			'epoch': epoch,
+			'model_state_dict': self.model.state_dict(),
+			'optimizer_state_dict': self.optimizer.state_dict()
+		}
+		if is_best:
+			filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'best-checkpoint-epoch{}.pth'.format(epoch))
+		else: 
+			filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-last.pth'.format(epoch))
+		print('saving checkpoint in ',filename)
+		torch.save(state,filename)
 
 
 

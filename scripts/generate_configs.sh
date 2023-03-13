@@ -7,28 +7,30 @@ grayscale=False
 # Set conda environment
 CONDA_BASE=$(conda info --base)
 source "$CONDA_BASE"/etc/profile.d/conda.sh
-conda activate relevo
+conda activate olayaenv
 
 # Set directories
-datasetRoot=$HOME/Datasets
-Datasets="MIMIR Aqualoc/Archaeological_site_sequences EuRoC TUM"
+datasetRoot=$HOME/Olaya-data/Datasets
+Datasets="KITTI MIMIR Aqualoc/Archaeological_site_sequences EuRoC TUM"
 
 for datasetName in $Datasets
 do
     if [[ $datasetName == *"MIMIR"* ]]; then
-        export tracks="SeaFloor/track0"
+        export tracks="SeaFloor/track0 SeaFloor/track1"
     elif [[ $datasetName == *"Aqualoc"* ]]; then
         export tracks="1"
     elif [[ $datasetName == *"EuRoC"* ]]; then
         export tracks="MH_04_difficult"
     elif [[ $datasetName == *"TUM"* ]]; then
         export tracks="rgbd_dataset_freiburg1_360"
+    elif [[ $datasetName == *"KITTI"* ]]; then
+        export tracks="00 01 02 03 04 05 06 07 08 09 10 11"
     fi
 
     for track in $tracks
     do
         export sequence_name=$track
-        export result_directory="../saved/results/releVO/"$datasetName"/"$sequence_name
+        export result_directory="../saved/results/"$datasetName"/"$sequence_name
         export dataset_directory=$datasetRoot"/"$datasetName
         mkdir --parents ../configs/data_loader/"$datasetName"
         mkdir --parents ../configs/data_loader/"$datasetName"/"$sequence_name"

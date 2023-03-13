@@ -8,7 +8,8 @@ def mse_euler_pose_loss(data_dict):
     ''' Loss function for euler angles. Note:
     data_dict["result"] is a tensor with shape (batch x sequence_len x 6)
     data_dict["poses"] is a list with len = sequence_len, each element in list
-    is a tensor with shape (batch x (4x4))'''
+    is a tensor with shape (batch x (4x4))
+    returns: average for batch and sequence of the loss'''
     estimate = data_dict["result"] # 1,1,6 - 1,3,6 
     target = data_dict["poses"] # list of seq with (batch, 4x4) 1(1x(4,4)) - 3(1x(4,4))
     
@@ -28,8 +29,8 @@ def mse_euler_pose_loss(data_dict):
         euler_estimate = estimate[:, i, :3]
         t_estimate = estimate[:, i, 3:]
 
-        pos_loss = mse_metric({"result":t_estimate, "target":t_target})
-        rot_loss = mse_metric({"result":euler_estimate, "target":euler_target})
+        pos_loss = mse_metric({"result":t_estimate, "target":t_target}) # already providing mean  val
+        rot_loss = mse_metric({"result":euler_estimate, "target":euler_target}) # already providing mean val
    
         loss = 100. * rot_loss + pos_loss
         loss_dict[f"loss_frame_{i}"] = loss
@@ -37,8 +38,8 @@ def mse_euler_pose_loss(data_dict):
         sequence_rotation_loss += rot_loss
         sequence_pos_loss += pos_loss
 
-    loss_dict["loss"] = sequence_loss
-    loss_dict["rotation_loss"] = sequence_rotation_loss
-    loss_dict["traslation_loss"] = sequence_pos_loss
+    loss_dict["loss"] = sequence_loss/seq_len
+    loss_dict["rotation_loss"] = sequence_rotation_loss/seq_len
+    loss_dict["traslation_loss"] = sequence_pos_loss/seq_len
 
     return loss_dict
