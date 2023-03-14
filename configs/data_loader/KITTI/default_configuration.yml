@@ -7,15 +7,31 @@ image:
     height: 370                                           # image height
     width: 1226                                           # image width
     ext: png                                              # image file extension for data loading
-seq: ${sequence_name}                                     # sequence to run
+seq: "${sequence_name}"                                     # sequence to run
 frame_step: 1                                             # frame step
+seq_len: ${seq_len}                                       # length of frame sequence 
 cam_mode: mono                                            # camera mode: [mono, stereo]
+resize: ${resize}
+crop_box: ${crop_box}
+grayscale: ${grayscale}
 
 #-------------------------------------
 #- Directories
 #-------------------------------------
 directory:
+    calib_dir: ${dataset_directory}/data_odometry_calib/dataset/sequences/${sequence_name}
     result_dir: ${result_directory}                       # directory to save result
-    img_seq_dir: ${dataset_directory}/data_odometry_color/dataset/sequences       # image data directory
+    img_seq_dir: ${dataset_directory}/data_odometry_gray/dataset/sequences       # image data directory
     gt_pose_dir: ${dataset_directory}/data_odometry_poses/dataset/poses   # (optional) ground-truth pose data directory
     depth_dir:                                            # (optional) external depth data, e.g. ground-truth depths
+
+#-------------------------------------
+#- Depth
+#-------------------------------------
+depth:                                                    # Depth configuration
+    depth_src:                                            # depth source [None, gt]
+    deep_depth:
+        network: 
+        pretrained_model: 
+    max_depth: 50                                        # maximum depth 
+    min_depth: 0  

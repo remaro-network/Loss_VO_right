@@ -47,7 +47,6 @@ def main(config):
     
     # setup data loader
     data_loader = config.initialize('data_loader', module_data)
-    print("No. of examples", len(data_loader))
     # data_loader = inf_loop(data_loader)
 
     # base_path = data_args['dataset_dir']

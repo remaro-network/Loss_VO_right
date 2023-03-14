@@ -32,6 +32,9 @@ class KITTI(Dataset):
                 - **rgb_timestamp** : {'depth': depth_timestamp, 'pose': pose_timestamp}
         """
         self.rgb_d_pose_pair = {}
+        data_dir = self.data_dir
+        ext = self.cfg.image.ext
+        dir = glob(os.path.join(self.data_dir['img'], "*.{}".format(self.cfg.image.ext)))
         len_seq = len(glob(os.path.join(self.data_dir['img'], "*.{}".format(self.cfg.image.ext))))
         for i in range(len_seq):
             self.rgb_d_pose_pair[i] = {}
@@ -66,7 +69,8 @@ class KittiOdom(KITTI):
     
     def __init__(self, *args, **kwargs):
         super(KittiOdom, self).__init__(*args, **kwargs)
-
+    def update_gt_pose(self):
+        return
     def get_intrinsics_param(self):
         """Read intrinsics parameters for each dataset
 
@@ -78,10 +82,18 @@ class KittiOdom(KITTI):
                             self.cfg.seq
                             )
         intrinsics_param = load_kitti_odom_intrinsics(
-                        os.path.join(img_seq_dir, "calib.txt"),
+                        os.path.join(self.cfg.directory.calib_dir, "calib.txt"),
                         self.cfg.image.height, self.cfg.image.width
                         )[2]
         return intrinsics_param
+    def get_distortion_param(self):
+        """Read distortion parameters for each dataset
+
+        Returns:
+            distortion_param (list): [k1, k2, p1, p2, k3]
+        """
+        distortion_param = [0, 0, 0, 0, 0]
+        return distortion_param
     
     def get_data_dir(self):
         """Get data directory
@@ -99,7 +111,7 @@ class KittiOdom(KITTI):
                             self.cfg.directory.img_seq_dir,
                             self.cfg.seq
                             )
-        data_dir['img'] = os.path.join(img_seq_dir, "image_2")
+        data_dir['img'] = os.path.join(img_seq_dir, "image_0")
 
         # get depth data directory
         data_dir['depth_src'] = self.cfg.depth.depth_src
@@ -123,7 +135,7 @@ class KittiOdom(KITTI):
         """
         annotations = os.path.join(
                             self.cfg.directory.gt_pose_dir,
-                            "{}.txt".format(self.cfg.seq)
+                            "{}.txt".format(str(self.cfg.seq))
                             )
         gt_poses = load_poses_from_txt(annotations)
         return gt_poses
@@ -172,7 +184,7 @@ class KittiRaw(KITTI):
     
     def __init__(self, *args, **kwargs):
         super(KittiRaw, self).__init__(*args, **kwargs)
-
+    
     def get_intrinsics_param(self):
         """Read intrinsics parameters for each dataset
 

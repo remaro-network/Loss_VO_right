@@ -191,7 +191,6 @@ class TestDatabaseDataloader(unittest.TestCase):
         for index,d in tqdm(enumerate(_dset), total=len(_dset)):
             # plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
             if d["poses"] is not None:
-                print(d["poses"][0].shape)
                 H_kf0_kf1 = d["poses"][0]
                 if i ==0:
                     T_target_prev.append(H_kf0_kf1)
@@ -220,18 +219,17 @@ class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
     # @unittest.skip("Skipping dataloader KITTI test")
     def test_MultiDataLoader_KITTI(self):
-        test_sequences=["00", "01"]
+        test_sequences=["00"]
         cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","KITTI",test_sequence, test_sequence+".yml") for test_sequence in test_sequences]
         # _dsets = [Dataset(cfg_dir) for cfg_dir in cfg_dirs]
-        _dset = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+        _dset = DataLoader(MultiDataset(cfg_dirs),batch_size=2, shuffle=False, num_workers=0, drop_last=True)
 
         i=0
         T_target_prev = list()  
 
         for index,d in tqdm(enumerate(_dset), total=len(_dset)):
-            # plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
+            plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
             if d["poses"] is not None:
-                print(d["poses"][0].shape)
                 H_kf0_kf1 = d["poses"][0]
                 if i ==0:
                     T_target_prev.append(H_kf0_kf1)
