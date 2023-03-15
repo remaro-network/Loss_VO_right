@@ -12,16 +12,29 @@ def plot_route(gt, c_gt='g'):
 
     x = gt[:][:,0,3]  
     y = gt[:][:,1,3]
-
-    plt.plot(x, y, color=c_gt, label='Ground Truth')
-    plt.scatter(x, y, color='b')
-    plt.gca().set_aspect('equal', adjustable='datalim')
+    z = gt[:][:,2,3]
+   
+    
+    fig = plt.figure()
+    fig.subplots_adjust(hspace=0.4, wspace=0.4)
+    ax1 = fig.add_subplot(231)
+    ax1.plot(x, y)
+    ax1.set_xlabel("X")
+    ax1.set_ylabel("Y")
+    ax2 = fig.add_subplot(234)
+    ax2.plot(x, z)
+    ax2.set_xlabel("X")
+    ax2.set_ylabel("Z")
+    ax3 = fig.add_subplot(232)
+    ax3.plot(y, z)
+    ax3.set_xlabel("Y")
+    ax3.set_ylabel("Z")
 
 class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
     @unittest.skip("Skipping TUM test")
     def test_SingleDataLoader_TUM(self):
-        test_sequence = "rgbd_dataset_freiburg1_360"
+        test_sequence = "rgbd_dataset_freiburg1_xyz"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","TUM", test_sequence, test_sequence+".yml")
         _dset = SingleDataset(cfg_dir)
 
@@ -219,16 +232,16 @@ class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
     # @unittest.skip("Skipping dataloader KITTI test")
     def test_MultiDataLoader_KITTI(self):
-        test_sequences=["00"]
+        test_sequences=["05"]
         cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","KITTI",test_sequence, test_sequence+".yml") for test_sequence in test_sequences]
         # _dsets = [Dataset(cfg_dir) for cfg_dir in cfg_dirs]
-        _dset = DataLoader(MultiDataset(cfg_dirs),batch_size=2, shuffle=False, num_workers=0, drop_last=True)
+        _dset = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
 
         i=0
         T_target_prev = list()  
 
         for index,d in tqdm(enumerate(_dset), total=len(_dset)):
-            plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
+            # plt.imshow( d["keyframe"][0].permute(1, 2, 0)+.5)
             if d["poses"] is not None:
                 H_kf0_kf1 = d["poses"][0]
                 if i ==0:
