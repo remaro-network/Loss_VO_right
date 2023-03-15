@@ -111,7 +111,7 @@ class KittiOdom(KITTI):
                             self.cfg.directory.img_seq_dir,
                             self.cfg.seq
                             )
-        data_dir['img'] = os.path.join(img_seq_dir, "image_0")
+        data_dir['img'] = os.path.join(img_seq_dir, "image_2")
 
         # get depth data directory
         data_dir['depth_src'] = self.cfg.depth.depth_src
