@@ -32,7 +32,7 @@ def plot_route(gt, c_gt='g'):
 
 class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
-    @unittest.skip("Skipping TUM test")
+    # @unittest.skip("Skipping TUM test")
     def test_SingleDataLoader_TUM(self):
         test_sequence = "rgbd_dataset_freiburg1_xyz"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","TUM", test_sequence, test_sequence+".yml")
@@ -44,7 +44,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         for d in tqdm(_dset):
             if d["poses"] is not None:
 
-                # plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
+                plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
 
                 H_kf0_kf1 = d["poses"][0]
                 if i ==0:
@@ -230,7 +230,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         plt.close()
 
     @classmethod
-    # @unittest.skip("Skipping dataloader KITTI test")
+    @unittest.skip("Skipping dataloader KITTI test")
     def test_MultiDataLoader_KITTI(self):
         test_sequences=["05"]
         cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","KITTI",test_sequence, test_sequence+".yml") for test_sequence in test_sequences]

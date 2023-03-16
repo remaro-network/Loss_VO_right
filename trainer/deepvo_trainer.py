@@ -6,10 +6,10 @@ from tqdm import tqdm
 from utils.util import map_fn, operator_on_dict
 from model.loss_functions import pose_losses
 from model.deepvo.deepvo_model import DeepVOModel
-from data_loader.data_loaders import SingleDataset, MultiDataset
+from data_loader.data_loaders import MultiDataset
 from torch.utils.data import DataLoader
-from trainer.trainer import Trainer
 from base.logger import VOLogger
+from data_loader import dataset_type_as_directory
 
 def to_device(data, device):
     if isinstance(data, dict):
@@ -20,14 +20,11 @@ def to_device(data, device):
         return data.to(device)
 
 class DeepVOTrainer(object):
-	def __init__(self, data_loader, model_args, config):
+	def __init__(self, config):
 
 		self.device = config.n_gpu
 		# Model setup
-		self.model = DeepVOModel(batchNorm=model_args.batchNorm,checkpoint_location=model_args.checkpoint_location,
-									conv_dropout=model_args.conv_dropout, image_size = config.model.args.image_size, rnn_hidden_size=model_args.rnn_hidden_size,
-									rnn_dropout_out=model_args.rnn_dropout_out,rnn_dropout_between=model_args.rnn_dropout_between)
-		self.model.to(self.device)
+		self.model = self.set_model(config)
 		# Loss config
 		self.loss_cfg = config.loss
 		# Trainer config
@@ -39,20 +36,35 @@ class DeepVOTrainer(object):
 		self.writer = VOLogger(log_dir=config.log_dir, log_step=config.log_step)
 		# Data loader
 		self.batch_size = config.data_loader.batch_size
-		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","KITTI", test_sequence,test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
-		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
+		self.data_loader = self.set_data_loader(config.dataset,config.data_loader.dataset_dirs, self.batch_size, config.data_loader.shuffle, 
+					  							config.data_loader.num_workers, True)
 
 		self.len_epoch = self.trainer_args.epochs
 		# Validation
 		self.validation = config.validation.do_validation
 		if self.validation:
-			cfg_dirs_validation = [os.path.join(os.getcwd(),"configs","data_loader","KITTI", test_sequence,test_sequence+".yml") for test_sequence in config.validation.sequences]
-			self.validation_data_loader = DataLoader(MultiDataset(cfg_dirs_validation),batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
+			self.validation_data_loader = self.set_data_loader(config.dataset,config.validation.sequences, self.batch_size, 
+						      								   config.validation.shuffle, config.validation.num_workers, True)
 		# Model checkpoint saving
 		self.checkpoint_dir = config.trainer.save_dir
 		self.checkpoint_period = config.trainer.save_period
 
-		
+	def set_model(self,config):
+		model = DeepVOModel(batchNorm=config.model.args.batchNorm,checkpoint_location=config.model.args.checkpoint_location,
+									conv_dropout=config.model.args.conv_dropout, image_size = config.model.args.image_size, rnn_hidden_size=config.model.args.rnn_hidden_size,
+									rnn_dropout_out=config.model.args.rnn_dropout_out,rnn_dropout_between=config.model.args.rnn_dropout_between)
+		return model.to(self.device)
+	
+	def set_data_loader(self, dataset,dataset_dirs, batch_size, shuffle, num_workers, drop_last):
+		# assign dataset stype to config folder
+		if dataset == "mimir":
+			cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader",dataset_type_as_directory[dataset], 
+						test_sequence+".yml") for test_sequence in dataset_dirs]
+		else:
+			cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader",dataset_type_as_directory[dataset], 
+						test_sequence,test_sequence+".yml") for test_sequence in dataset_dirs]
+		data_loader = DataLoader(MultiDataset(cfg_dirs), batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, drop_last=drop_last)
+		return data_loader
 
 	def train(self):
 		'''

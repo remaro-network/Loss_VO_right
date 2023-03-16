@@ -1,11 +1,3 @@
-import argparse
-import collections
-import torch
-import data_loader.data_loaders as module_data
-import model.loss as module_loss
-import model.metric as module_metric
-import model.model as module_arch
-from utils import seed_rng
 from utils.loadconfig import ConfigLoader
 from trainer.deepvo_trainer import DeepVOTrainer
 
@@ -16,9 +8,7 @@ def main(config, options=()):
 
     # lr_scheduler = config.initialize('lr_scheduler', torch.optim.lr_scheduler, optimizer)
 
-    trainer = DeepVOTrainer(data_loader  = config.data_loader, 
-                            model_args   = config.model.args,
-                            config = config)
+    trainer = DeepVOTrainer(config = config)
 
     trainer.train()
 
