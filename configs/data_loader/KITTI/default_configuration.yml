@@ -21,7 +21,7 @@ grayscale: ${grayscale}
 directory:
     calib_dir: ${dataset_directory}/data_odometry_calib/dataset/sequences/${sequence_name}
     result_dir: ${result_directory}                       # directory to save result
-    img_seq_dir: ${dataset_directory}/data_odometry_gray/dataset/sequences       # image data directory
+    img_seq_dir: ${dataset_directory}/data_odometry_color/dataset/sequences       # image data directory
     gt_pose_dir: ${dataset_directory}/data_odometry_poses/dataset/poses   # (optional) ground-truth pose data directory
     depth_dir:                                            # (optional) external depth data, e.g. ground-truth depths
 

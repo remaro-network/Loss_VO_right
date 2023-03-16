@@ -15,8 +15,7 @@ model:
         checkpoint_location: [saved/checkpoints/FlowNet2_checkpoint.pth.tar]
 data_loader:
     dataset_dirs: [
-          "SeaFloor/track0",
-          "SeaFloor/track1"    
+          "SeaFloor/track0"  
         ]
     batch_size: 1
     num_workers: 0
@@ -25,21 +24,41 @@ data_loader:
 
 loss: mse_euler_pose_loss
 
+#-------------------------------------
+#- Optimizer params
+#-------------------------------------
 optimizer:
     type: Adam
     args:
         lr: 0.001
         weight_decay: 0
         amsgrad: true
-
+#-------------------------------------
+#- Logging params
+#-------------------------------------
+log_dir: saved/logs/deepvo
+log_step: 1000
 
 #-------------------------------------
-#- Directories
+#- Trainer params
 #-------------------------------------
 trainer: 
     epochs: 10
     save_dir: "saved/deepvo/mimir"
-    save_period: 1
+    save_period: 100
     monitor: "min mse_metric"
     tensorboard: true
     metrics: ["mse_euler_position_metric", "mse_euler_rotation_metric"]
+#-------------------------------------
+#- Validation params
+#-------------------------------------
+validation: 
+    do_validation: true
+    sequences: [
+        "SeaFloor/track1"  
+        ]
+    batch_size: 1
+    num_workers: 0
+    shuffle: false
+    target_image_size: [480,720]
+    monitor: "min mse_metric"
