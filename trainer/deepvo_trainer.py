@@ -39,14 +39,14 @@ class DeepVOTrainer(object):
 		self.writer = VOLogger(log_dir=config.log_dir, log_step=config.log_step)
 		# Data loader
 		self.batch_size = config.data_loader.batch_size
-		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
+		cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","KITTI", test_sequence,test_sequence+".yml") for test_sequence in data_loader.dataset_dirs]
 		self.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
 
 		self.len_epoch = self.trainer_args.epochs
 		# Validation
 		self.validation = config.validation.do_validation
 		if self.validation:
-			cfg_dirs_validation = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.validation.sequences]
+			cfg_dirs_validation = [os.path.join(os.getcwd(),"configs","data_loader","KITTI", test_sequence,test_sequence+".yml") for test_sequence in config.validation.sequences]
 			self.validation_data_loader = DataLoader(MultiDataset(cfg_dirs_validation),batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
 		# Model checkpoint saving
 		self.checkpoint_dir = config.trainer.save_dir
@@ -59,19 +59,20 @@ class DeepVOTrainer(object):
 		Full training logic
 		'''
 		not_improved_count = 0
-		best_valid_loss=float('inf')
+		self.best_valid_loss=float('inf')
 		is_best = False
 
 		for epoch in range(1,self.len_epoch+1):
 			train_log = self.train_epoch(epoch)
 			if self.validation:
 				val_log = self.validation_epoch(epoch)
-				if val_log["loss"] < best_valid_loss:
+				if val_log["loss"] < self.best_valid_loss:
 					self.best_valid_loss = val_log["loss"]
-					print(f"\nBest validation loss: {best_valid_loss}")
+					print(f"\nBest validation loss: {self.best_valid_loss}")
 					print(f"\nSaving best model for epoch: {epoch+1}\n")
 					is_best = True
 					self.save_checkpoint(epoch,is_best)   
+					is_best=False
 					
 			self.save_checkpoint(epoch,is_best)               
 
@@ -83,7 +84,7 @@ class DeepVOTrainer(object):
 		# Set validation mode
 		self.model.eval()
 		with torch.no_grad():
-			for batch_idx, data in tqdm(enumerate(self.validation_data_loader)):
+			for batch_idx, data in tqdm(enumerate(self.validation_data_loader),total=len(self.validation_data_loader)):
 				# Every data instance is a pair of input data + target result
 				data = to_device(data, self.device)
 
@@ -178,9 +179,9 @@ class DeepVOTrainer(object):
 			'optimizer_state_dict': self.optimizer.state_dict()
 		}
 		if is_best:
-			filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'best-checkpoint-epoch{}.pth'.format(epoch))
+			filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'best-checkpoint-epoch.pth')
 		else: 
-			filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-last.pth'.format(epoch))
+			filename = os.path.join(os.getcwd(),self.checkpoint_dir, 'checkpoint-last.pth')
 		print('saving checkpoint in ',filename)
 		torch.save(state,filename)
 
