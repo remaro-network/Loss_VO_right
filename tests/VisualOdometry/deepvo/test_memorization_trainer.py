@@ -23,22 +23,22 @@ class DeepVOModuleTest(unittest.TestCase):
         config = self.config_loader.merge_cfg('configs/test/deepvo/miscellaneous.yml')
         trainer = DeepVOTrainer(config)
         trainer.train()
-    @unittest.skip("Skipping kitti test")
+    # @unittest.skip("Skipping kitti test")
     def test_1epochDeepvoTrainer_KITTI(self):
         config = self.config_loader.merge_cfg('configs/test/deepvo/kitti.yml')
         trainer = DeepVOTrainer(config)
         trainer.train()
-    @unittest.skip("Skipping mimir test")
+    # @unittest.skip("Skipping mimir test")
     def test_1epochDeepvoTrainer_MIMIR(self):
         config = self.config_loader.merge_cfg('configs/test/deepvo/mimir.yml')
         trainer = DeepVOTrainer(config)
         trainer.train()
-    @unittest.skip("Skipping tum test")
+    # @unittest.skip("Skipping tum test")
     def test_1epochDeepvoTrainer_TUM(self):
         config = self.config_loader.merge_cfg('configs/test/deepvo/tum.yml')
         trainer = DeepVOTrainer(config)
         trainer.train()
-    @unittest.skip("Skipping euroc test")
+    # @unittest.skip("Skipping euroc test")
     def test_1epochDeepvoTrainer_euroc(self):
         config = self.config_loader.merge_cfg('configs/test/deepvo/euroc.yml')
         trainer = DeepVOTrainer(config)

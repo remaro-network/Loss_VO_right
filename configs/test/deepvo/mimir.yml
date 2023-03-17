@@ -1,7 +1,7 @@
 #-------------------------------------
 #- Basic setup
 #-------------------------------------
-dataset: mimir                                            # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
+dataset: [mimir]                                            # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
 n_gpu: 'cuda:0'
 model:
     type: DeepVOModel

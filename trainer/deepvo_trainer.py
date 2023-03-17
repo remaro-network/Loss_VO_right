@@ -57,15 +57,6 @@ class DeepVOTrainer(object):
 	
 	def set_data_loader(self, datasets,dataset_dirs, batch_size, shuffle, num_workers, drop_last):
 		# assign dataset stype to config folder
-		print(len(datasets))
-		for dataset in datasets:
-			print("dataset",dataset)
-			# for sequence in dataset_dirs.get(dataset):
-			# 	print(dataset,sequence)
-				# t=os.path.join(os.getcwd(),"configs","data_loader",dataset_type_as_directory[dataset], 
-				# 		sequence+".yml")
-				# print(t)
-
 		if "mimir" in datasets:
 			cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader",dataset_type_as_directory[dataset], 
 						test_sequence+".yml") for dataset in datasets for test_sequence in dataset_dirs.get(dataset) ]
