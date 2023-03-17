@@ -36,7 +36,7 @@ class DeepVOTrainer(object):
 		self.writer = VOLogger(log_dir=config.log_dir, log_step=config.log_step)
 		# Data loader
 		self.batch_size = config.data_loader.batch_size
-		self.data_loader = self.set_data_loader(config.dataset,config.data_loader.dataset_dirs, self.batch_size, config.data_loader.shuffle, 
+		self.data_loader = self.set_data_loader(config.dataset,config.data_loader.sequences, self.batch_size, config.data_loader.shuffle, 
 					  							config.data_loader.num_workers, True)
 
 		self.len_epoch = self.trainer_args.epochs
@@ -51,18 +51,27 @@ class DeepVOTrainer(object):
 
 	def set_model(self,config):
 		model = DeepVOModel(batchNorm=config.model.args.batchNorm,checkpoint_location=config.model.args.checkpoint_location,
-									conv_dropout=config.model.args.conv_dropout, image_size = config.model.args.image_size, rnn_hidden_size=config.model.args.rnn_hidden_size,
+									conv_dropout=config.model.args.conv_dropout, image_size = config.data_loader.target_image_size, rnn_hidden_size=config.model.args.rnn_hidden_size,
 									rnn_dropout_out=config.model.args.rnn_dropout_out,rnn_dropout_between=config.model.args.rnn_dropout_between)
 		return model.to(self.device)
 	
-	def set_data_loader(self, dataset,dataset_dirs, batch_size, shuffle, num_workers, drop_last):
+	def set_data_loader(self, datasets,dataset_dirs, batch_size, shuffle, num_workers, drop_last):
 		# assign dataset stype to config folder
-		if dataset == "mimir":
+		print(len(datasets))
+		for dataset in datasets:
+			print("dataset",dataset)
+			# for sequence in dataset_dirs.get(dataset):
+			# 	print(dataset,sequence)
+				# t=os.path.join(os.getcwd(),"configs","data_loader",dataset_type_as_directory[dataset], 
+				# 		sequence+".yml")
+				# print(t)
+
+		if "mimir" in datasets:
 			cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader",dataset_type_as_directory[dataset], 
-						test_sequence+".yml") for test_sequence in dataset_dirs]
+						test_sequence+".yml") for dataset in datasets for test_sequence in dataset_dirs.get(dataset) ]
 		else:
 			cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader",dataset_type_as_directory[dataset], 
-						test_sequence,test_sequence+".yml") for test_sequence in dataset_dirs]
+						test_sequence,test_sequence+".yml") for dataset in datasets for test_sequence in dataset_dirs.get(dataset) ]
 		data_loader = DataLoader(MultiDataset(cfg_dirs), batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, drop_last=drop_last)
 		return data_loader
 

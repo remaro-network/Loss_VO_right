@@ -1,24 +1,28 @@
 #-------------------------------------
 #- Basic setup
 #-------------------------------------
-dataset: [tum]                                            # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
+dataset: [euroc,kitti]                                           # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
 n_gpu: 'cuda:0'
 model:
     type: DeepVOModel
     args:
         batchNorm: true
         conv_dropout: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5]
-        image_size: [480,640]
         rnn_hidden_size: 1000
         rnn_dropout_out: 0.5
         rnn_dropout_between: 0
         checkpoint_location: [saved/checkpoints/FlowNet2_checkpoint.pth.tar]
 data_loader:
-    dataset_dirs: {tum: ["rgbd_dataset_freiburg1_xyz"]}
+    sequences: 
+        {
+            euroc: ["MH_04_difficult"],
+            kitti: ["00"],
+        }
+            
     batch_size: 1
     num_workers: 0
     shuffle: false
-    target_image_size: [480,640]
+    target_image_size: [480,752]
 
 loss: mse_euler_pose_loss
 
@@ -52,9 +56,13 @@ trainer:
 #-------------------------------------
 validation: 
     do_validation: true
-    dataset_dirs: {tum: ["rgbd_dataset_freiburg1_xyz"]}
+    sequences: 
+        {
+            euroc: ["MH_04_difficult"],
+            kitti: ["00"],
+        }
     batch_size: 1
     num_workers: 0
     shuffle: false
-    target_image_size: [480,640]
+    target_image_size: [480,752]
     monitor: "min mse_metric"

@@ -1,7 +1,7 @@
 #-------------------------------------
 #- Basic setup
 #-------------------------------------
-dataset: kitti_odom                                            # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2, mimir]
+dataset: [kitti]                                          # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2, mimir]
 n_gpu: 'cuda:0'
 model:
     type: DeepVOModel
@@ -14,12 +14,10 @@ model:
         rnn_dropout_between: 0
         checkpoint_location: [saved/checkpoints/FlowNet2_checkpoint.pth.tar]
 data_loader:
-    dataset_dirs: [
-          "00",
-          "02",
-          "08",
-          "09"  
-        ]
+    sequences: 
+        {
+            kitti: ["00","02","08","09"],
+        }
     batch_size: 18
     num_workers: 4
     shuffle: true
@@ -59,14 +57,10 @@ trainer:
 #-------------------------------------
 validation: 
     do_validation: true
-    sequences: [
-          "03",
-          "04",
-          "05",
-          "06",
-          "07",
-          "10"    
-        ]
+    sequences: 
+        {
+            kitti: ["03","04","05","06","07","10"],
+        }
     batch_size: 18
     num_workers: 0
     shuffle: true

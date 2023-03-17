@@ -14,9 +14,7 @@ model:
         rnn_dropout_between: 0
         checkpoint_location: [saved/checkpoints/FlowNet2_checkpoint.pth.tar]
 data_loader:
-    dataset_dirs: [
-          "SeaFloor/track0"  
-        ]
+    sequences: {mimir: ["SeaFloor/track0"]}
     batch_size: 1
     num_workers: 0
     shuffle: false
@@ -54,9 +52,7 @@ trainer:
 #-------------------------------------
 validation: 
     do_validation: true
-    sequences: [
-        "SeaFloor/track1"  
-        ]
+    sequences: {mimir: ["SeaFloor/track0"]}
     batch_size: 1
     num_workers: 0
     shuffle: false

@@ -1,7 +1,7 @@
 #-------------------------------------
 #- Basic setup
 #-------------------------------------
-dataset: euroc                                           # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
+dataset: [euroc]                                           # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
 n_gpu: 'cuda:0'
 model:
     type: DeepVOModel
@@ -14,9 +14,10 @@ model:
         rnn_dropout_between: 0
         checkpoint_location: [saved/checkpoints/FlowNet2_checkpoint.pth.tar]
 data_loader:
-    dataset_dirs: [
-          "MH_04_difficult"  
-        ]
+    sequences: 
+        {
+            euroc: ["MH_04_difficult"]
+        }
     batch_size: 1
     num_workers: 0
     shuffle: false
@@ -54,9 +55,10 @@ trainer:
 #-------------------------------------
 validation: 
     do_validation: true
-    sequences: [
-        "MH_04_difficult"  
-        ]
+    sequences: 
+        {
+            euroc: ["MH_04_difficult"]
+        }
     batch_size: 1
     num_workers: 0
     shuffle: false

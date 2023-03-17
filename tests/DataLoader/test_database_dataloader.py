@@ -32,7 +32,7 @@ def plot_route(gt, c_gt='g'):
 
 class TestDatabaseDataloader(unittest.TestCase):
     @classmethod
-    # @unittest.skip("Skipping TUM test")
+    @unittest.skip("Skipping TUM test")
     def test_SingleDataLoader_TUM(self):
         test_sequence = "rgbd_dataset_freiburg1_xyz"
         cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","TUM", test_sequence, test_sequence+".yml")
@@ -242,6 +242,46 @@ class TestDatabaseDataloader(unittest.TestCase):
 
         for index,d in tqdm(enumerate(_dset), total=len(_dset)):
             # plt.imshow( d["keyframe"][0].permute(1, 2, 0)+.5)
+            if d["poses"] is not None:
+                H_kf0_kf1 = d["poses"][0]
+                if i ==0:
+                    T_target_prev.append(H_kf0_kf1)
+                    i += 1 
+                    continue # in first it go to next frame to retrieve rel pose
+                # Absolute values
+                H_0_kf0 = T_target_prev[-1]
+                H_0_kf1 =torch.matmul(H_0_kf0,H_kf0_kf1)
+                
+                T_target_prev.append(H_0_kf1)
+                
+                i += 1 
+
+                plt.pause(0.005)
+
+        plt.show(block=False)
+        plt.pause(.003)
+        plt.close()
+
+        plot_route(T_target_prev, c_gt='g')
+        plt.show()
+        plt.show(block=False) # uncomment if you want it to auto close
+        plt.pause(3)
+        plt.close()
+
+    @classmethod
+    # @unittest.skip("Skipping dataloader KITTI test")
+    def test_MultiDataLoader_multidataset(self):
+        cfg_dir1 = os.path.join(os.getcwd(),"configs","data_loader","EuRoC","MH_04_difficult", "MH_04_difficult.yml")
+        cfg_dir2 = os.path.join(os.getcwd(),"configs","data_loader","TUM","rgbd_dataset_freiburg1_xyz", "rgbd_dataset_freiburg1_xyz.yml")
+        cfg_dirs = [cfg_dir1, cfg_dir2]
+        # _dsets = [Dataset(cfg_dir) for cfg_dir in cfg_dirs]
+        _dset = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=True, num_workers=0, drop_last=True)
+
+        i=0
+        T_target_prev = list()  
+
+        for index,d in tqdm(enumerate(_dset), total=len(_dset)):
+            plt.imshow( d["keyframe"][0].permute(1, 2, 0)+.5)
             if d["poses"] is not None:
                 H_kf0_kf1 = d["poses"][0]
                 if i ==0:
