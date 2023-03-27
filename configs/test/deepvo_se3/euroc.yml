@@ -1,0 +1,66 @@
+#-------------------------------------
+#- Basic setup
+#-------------------------------------
+dataset: [euroc]                                           # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2]
+n_gpu: 'cuda:0'
+model:
+    type: DeepVOModel
+    args:
+        batchNorm: true
+        conv_dropout: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5]
+        image_size: [480,752]
+        rnn_hidden_size: 1000
+        rnn_dropout_out: 0.5
+        rnn_dropout_between: 0
+        checkpoint_location: [saved/checkpoints/FlowNet2_checkpoint.pth.tar]
+data_loader:
+    sequences: 
+        {
+            euroc: ["MH_04_difficult"]
+        }
+    batch_size: 1
+    num_workers: 0
+    shuffle: false
+    target_image_size: [480,752]
+
+loss: se3_chordal_loss
+
+#-------------------------------------
+#- Optimizer params
+#-------------------------------------
+optimizer:
+    type: Adam
+    args:
+        lr: 0.001
+        weight_decay: 0
+        amsgrad: true
+#-------------------------------------
+#- Logging params
+#-------------------------------------
+log_dir: saved/logs/deepvo
+log_step: 1000
+
+#-------------------------------------
+#- Trainer params
+#-------------------------------------
+trainer: 
+    epochs: 1
+    save_dir: "saved/deepvo/mimir"
+    save_period: 100
+    monitor: "min mse_metric"
+    tensorboard: true
+    metrics: ["mse_euler_position_metric", "mse_euler_rotation_metric"]
+#-------------------------------------
+#- Validation params
+#-------------------------------------
+validation: 
+    do_validation: true
+    sequences: 
+        {
+            euroc: ["MH_04_difficult"]
+        }
+    batch_size: 1
+    num_workers: 0
+    shuffle: false
+    target_image_size: [480,752]
+    monitor: "min mse_metric"

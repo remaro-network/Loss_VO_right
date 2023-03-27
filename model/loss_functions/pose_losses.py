@@ -1,7 +1,40 @@
 import torch
 from torch import nn
-from utils.conversions import rotation_matrix_to_angle_axis
-from model.metric_functions.vo_metrics import mse_metric
+from utils.conversions import rotation_matrix_to_angle_axis , se3_exp_map, so3_exp_map
+from model.metric_functions.vo_metrics import mse_metric,SE3_chordal_metric, SO3_chordal_metric,vector_distance
+
+def se3_chordal_loss(data_dict, t_weight = 1,orientation_weight = 1.):
+    ''' Loss function for SE3. Note:
+    data_dict["result"] is a tensor with shape (batch x sequence_len x 6)
+    data_dict["poses"] is a list with len = sequence_len, each element in list
+    is a tensor with shape (batch x (4x4))
+    returns: average for batch and sequence of the loss'''
+    estimate = data_dict["result"] # 1,1,6 - 1,3,6 
+    target = data_dict["poses"] # list of seq with (batch, 4x4) 1(1x(4,4)) - 3(1x(4,4))
+    
+    seq_len = estimate.size()[1] # (batch, seq, dim_pose)
+    
+    loss_dict = dict()
+    sequence_se3_loss = 0.
+    sequence_rotation_loss = 0.
+    sequence_pos_loss = 0.
+    for i in range (0,seq_len): # relative T, we don take first frame in seq
+        # preprocessing target values
+        T_kf_i_target = target[i]
+        T_kf_i_estimate = se3_exp_map(estimate[:, i, :])
+
+        se3_loss = SE3_chordal_metric(T_kf_i_estimate,T_kf_i_target, t_weight, orientation_weight) # already providing mean val
+        so3_loss = SO3_chordal_metric(T_kf_i_estimate[:, :3, :3],T_kf_i_target[:, :3, :3])
+        t_loss = vector_distance(T_kf_i_estimate[:,:-1,-1],T_kf_i_target[:,:-1,-1])
+        
+        sequence_se3_loss += se3_loss
+        sequence_rotation_loss += so3_loss
+        sequence_pos_loss += t_loss
+
+    loss_dict["SE3_loss"] = sequence_se3_loss/seq_len
+    loss_dict["rotation_loss"] = sequence_rotation_loss/seq_len
+    loss_dict["traslation_loss"] = sequence_pos_loss/seq_len
+    return loss_dict
 
 
 def mse_euler_pose_loss(data_dict):

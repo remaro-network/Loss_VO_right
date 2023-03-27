@@ -19,7 +19,7 @@ class DeepVOModuleTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         config_loader = ConfigLoader()
-        config = config_loader.merge_cfg('configs/test/deepvo/mimir.yml')
+        config = config_loader.merge_cfg('configs/test/deepvo_se3/mimir.yml')
         cls.device = config.n_gpu
         # Model setup
         cls.model = DeepVOModel(batchNorm=config.model.args.batchNorm,checkpoint_location=config.model.args.checkpoint_location,
