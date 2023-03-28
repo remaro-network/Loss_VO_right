@@ -146,7 +146,7 @@ class DeepVOTrainer(object):
 
 			# Compute the loss and its gradients
 			loss_dict = lossfcn(outputs)
-			# loss_dict = map_fn(loss_dict, torch.mean) # if loss dict, average losses
+			loss_dict = map_fn(loss_dict, torch.mean) # if loss dict, average losses
 			loss = loss_dict["loss"]
    
 			loss.backward()

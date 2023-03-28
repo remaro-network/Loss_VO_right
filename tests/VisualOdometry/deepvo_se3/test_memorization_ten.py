@@ -37,7 +37,7 @@ class DeepVOModuleTest(unittest.TestCase):
         # Optimizer
         cls.optimizer = getattr(torch.optim,config.optimizer['type'])(cls.model.parameters(),**config.optimizer.args)
         # Data loader
-        cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.data_loader.dataset_dirs]
+        cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in config.data_loader.sequences]
         cls.data_loader = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
         # Model checkpoint saving
         cls.checkpoint_dir = config.trainer.save_dir

@@ -24,7 +24,7 @@ class DeepVOModuleTest(unittest.TestCase):
         config = self.config_loader.merge_cfg('configs/test/deepvo_se3/miscellaneous.yml')
         trainer = DeepVOTrainer(config)
         trainer.train()
-    @unittest.skip("Skipping kitti test")
+    # @unittest.skip("Skipping kitti test")
     def test_1epochDeepvoTrainer_KITTI(self):
         config = self.config_loader.merge_cfg('configs/test/deepvo_se3/kitti.yml')
         trainer = DeepVOTrainer(config)
@@ -39,7 +39,7 @@ class DeepVOModuleTest(unittest.TestCase):
         config = self.config_loader.merge_cfg('configs/test/deepvo_se3/tum.yml')
         trainer = DeepVOTrainer(config)
         trainer.train()
-    # @unittest.skip("Skipping euroc test")
+    @unittest.skip("Skipping euroc test")
     def test_1epochDeepvoTrainer_euroc(self):
         config = self.config_loader.merge_cfg('configs/test/deepvo_se3/euroc.yml')
         trainer = DeepVOTrainer(config)

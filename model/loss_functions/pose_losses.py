@@ -31,7 +31,7 @@ def se3_chordal_loss(data_dict, t_weight = 1,orientation_weight = 1.):
         sequence_rotation_loss += so3_loss
         sequence_pos_loss += t_loss
 
-    loss_dict["SE3_loss"] = sequence_se3_loss/seq_len
+    loss_dict["loss"] = sequence_se3_loss/seq_len
     loss_dict["rotation_loss"] = sequence_rotation_loss/seq_len
     loss_dict["traslation_loss"] = sequence_pos_loss/seq_len
     return loss_dict
