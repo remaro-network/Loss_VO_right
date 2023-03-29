@@ -23,7 +23,7 @@ data_loader:
     shuffle: true
     target_image_size: [480,752]
 
-loss: se3_chordal_loss
+loss: quaternion_pose_loss
 
 #-------------------------------------
 #- Optimizer params
@@ -38,7 +38,7 @@ optimizer:
 #-------------------------------------
 #- Logging params
 #-------------------------------------
-log_dir: saved/logs/deepvo
+log_dir: saved/logs/deepvo_quat/mimir
 log_step: 1000
 
 #-------------------------------------
@@ -46,7 +46,7 @@ log_step: 1000
 #-------------------------------------
 trainer: 
     epochs: 200
-    save_dir: "saved/deepvo/mimir"
+    save_dir: "saved/deepvo_quat/mimir"
     save_period: 1
     monitor: "min mse_metric"
     tensorboard: true

@@ -39,7 +39,7 @@ optimizer:
 #-------------------------------------
 #- Logging params
 #-------------------------------------
-log_dir: saved/logs/deepvo/test
+log_dir: saved/logs/deepvo_quat/test
 log_step: 1
 
 #-------------------------------------
@@ -47,7 +47,7 @@ log_step: 1
 #-------------------------------------
 trainer: 
     epochs: 1
-    save_dir: "saved/deepvo/original_paper"
+    save_dir: "saved/deepvo_quat/test"
     save_period: 1
     monitor: "min mse_metric"
     tensorboard: true

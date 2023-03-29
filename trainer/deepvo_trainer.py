@@ -50,7 +50,7 @@ class DeepVOTrainer(object):
 		self.checkpoint_period = config.trainer.save_period
 
 	def set_model(self,config):
-		model = DeepVOModel(batchNorm=config.model.args.batchNorm,checkpoint_location=config.model.args.checkpoint_location,
+		model = DeepVOModel(batchNorm=config.model.args.batchNorm,checkpoint_location=config.model.args.checkpoint_location, output_shape = config.model.args.output_shape,
 									conv_dropout=config.model.args.conv_dropout, image_size = config.data_loader.target_image_size, rnn_hidden_size=config.model.args.rnn_hidden_size,
 									rnn_dropout_out=config.model.args.rnn_dropout_out,rnn_dropout_between=config.model.args.rnn_dropout_between)
 		return model.to(self.device)
