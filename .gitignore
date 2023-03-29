@@ -128,3 +128,20 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .vscode
+
+saved/checkpoints/FlowNet2_checkpoint.pth.tar
+configs/data_loader/KITTI/00/00.yml
+configs/data_loader/KITTI/01/01.yml
+configs/data_loader/KITTI/02/02.yml
+configs/data_loader/KITTI/03/03.yml
+configs/data_loader/KITTI/04/04.yml
+configs/data_loader/KITTI/05/05.yml
+configs/data_loader/KITTI/06/06.yml
+configs/data_loader/KITTI/07/07.yml
+configs/data_loader/KITTI/08/08.yml
+configs/data_loader/KITTI/09/09.yml
+configs/data_loader/KITTI/10/10.yml
+configs/data_loader/KITTI/11/11.yml
+
+# ignore logs
+/saved/logs

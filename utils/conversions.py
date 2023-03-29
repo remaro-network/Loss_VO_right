@@ -389,7 +389,7 @@ def quaternion_to_angle_axis(
 
 
 def rotation_matrix_to_quaternion(
-    rotation_matrix: torch.Tensor, eps: float = 1.0e-8, order: QuaternionCoeffOrder = QuaternionCoeffOrder.XYZW
+    rotation_matrix: torch.Tensor, eps: float = 1.0e-8, order: QuaternionCoeffOrder = QuaternionCoeffOrder.WXYZ
 ) -> torch.Tensor:
     r"""Convert 3x3 rotation matrix to 4d quaternion vector.
 
