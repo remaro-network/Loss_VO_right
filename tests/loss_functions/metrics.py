@@ -2,15 +2,34 @@ import unittest
 import torch
 import os
 from model.metric_functions.vo_metrics import SO3_chordal_metric, vector_distance, SE3_chordal_metric, quaternion_distance_metric
-from model.loss_functions.pose_losses import se3_chordal_loss, mse_euler_pose_loss
+from model.loss_functions.pose_losses import se3_chordal_loss, mse_euler_pose_loss, quaternion_pose_loss
 from utils.conversions import so3_exp_map, se3_exp_map, rotation_matrix_to_quaternion
 
 class TestDatabaseDataloader(unittest.TestCase):
+    def test_quaternion_pose_loss(self):
+        ''' unit testing for pose loss w. orientation as quaternion'''
+        # create a dummy data
+        p1 = torch.zeros([1, 3, 7], device=torch.device('cuda:0'))
+        p1[:,:,4] = 1 # 180 deg. at Z
+        p2 = torch.eye(4, 4).unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
+        p2 = torch.reshape(p2, (3, 1, 4, 4))
+
+        # call the function with data_dict
+        loss_dict = quaternion_pose_loss({"result": p1, "poses": p2})
+
+        # check the output
+        self.assertEqual(first = loss_dict["loss"].shape, second = torch.Size([1]))
+        self.assertAlmostEqual(loss_dict["loss"].item(), 1.41, delta = 0.01)
+        self.assertEqual(first = loss_dict["rotation_loss"].shape, second = torch.Size([1]))
+        self.assertAlmostEqual(loss_dict["rotation_loss"].item(), 1.41, delta = 0.01)
+        self.assertEqual(first = loss_dict["traslation_loss"].shape, second = torch.Size([1]))
+        self.assertAlmostEqual(loss_dict["traslation_loss"].item(), 0, delta = 0.01)
+    
     def test_quaternion_distance_metric(self):
         ''' unit testing for quaternion distance function'''
         # create a dummy data
         q1 = torch.zeros(1, 4)
-        q1[:, 3] = 1
+        q1[:, 3] = 1 # 180 deg. at Z
         q2 = torch.eye(4, 4).unsqueeze(0).repeat(3, 1, 1)
         q2 = torch.reshape(q2, (3, 1, 4, 4))
         distance = 0

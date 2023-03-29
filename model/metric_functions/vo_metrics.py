@@ -2,6 +2,15 @@ import torch
 from torch import nn
 from utils.conversions import rotation_matrix_to_angle_axis, se3_exp_map, so3_exp_map
 
+def quaternion_distance_metric(q1, q2):
+    """ compute the quaternion distance between two vectors """
+    plus_dist = torch.linalg.vector_norm(q1+q2, dim = 1)
+    minus_dist = torch.linalg.vector_norm(q1-q2, dim = 1)
+    min_dist = plus_dist
+    if plus_dist > minus_dist:
+        min_dist = minus_dist
+    return min_dist
+
 def SE3_chordal_metric_old(data_dict, t_weight = 1, orientation_weight = 1):
     so3_chordal = SO3_chordal_metric(data_dict)
     tnorm = vector_distance(data_dict)
