@@ -145,3 +145,10 @@ configs/data_loader/KITTI/11/11.yml
 
 # ignore logs
 /saved/logs
+configs/data_loader/Aqualoc/Archaeological_site_sequences/1/1.yml
+configs/data_loader/Aqualoc/Archaeological_site_sequences/1/1.yml
+configs/data_loader/EuRoC/MH_04_difficult/MH_04_difficult.yml
+configs/data_loader/MIMIR/SeaFloor/track0.yml
+configs/data_loader/MIMIR/SeaFloor/track1.yml
+configs/data_loader/TUM/rgbd_dataset_freiburg1_360/rgbd_dataset_freiburg1_360.yml
+*epoch.pth
