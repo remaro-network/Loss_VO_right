@@ -6,7 +6,7 @@ import numpy as np
 
 class DeepVOModel(nn.Module):
     def __init__(self, batchNorm = True, checkpoint_location=None, clip = None, image_size = (480,640),
-                 conv_dropout = (0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2),
+                 conv_dropout = (0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2), output_shape = 6,
                  rnn_hidden_size = 1000, rnn_dropout_out = 0.5, rnn_dropout_between = 0):
         """
         :param pretrain_mode: Which pretrain mode to use:
@@ -16,6 +16,7 @@ class DeepVOModel(nn.Module):
             2: Only run mask module. In this mode, the network will return the mask as the main result.
             3: Only run depth module, but use the auxiliary masks to mask the cost volume. This mode was not used in
             the paper. (Default=0)
+        :param output_shape: length for pose tensor. (Default=6)
         :param pretrain_dropout: Dropout rate used in pretrain_mode=1. (Default=0)
         :param cv_patch_size: Patchsize, over which the ssim errors get averaged. (Default=3)
         :param checkpoint_location: Load given list of checkpoints. (Default=None)
@@ -49,7 +50,7 @@ class DeepVOModel(nn.Module):
                     dropout = rnn_dropout_between, 
                     batch_first = True)
         self.rnn_drop_out = nn.Dropout(rnn_dropout_out)
-        self.linear = nn.Linear(in_features=rnn_hidden_size, out_features=6)
+        self.linear = nn.Linear(in_features=rnn_hidden_size, out_features=output_shape)
         # initalization from https://github.com/ChiWeiHsiao/DeepVO-pytorch/blob/master/model.py
         for m in self.modules():
             if isinstance(m, nn.LSTM):
