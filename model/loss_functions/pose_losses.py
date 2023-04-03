@@ -43,7 +43,7 @@ def quaternion_pose_loss(data_dict,t_weight = 1, orientation_weight = 1):
     return loss_dict
 
 
-def se3_chordal_loss(data_dict, t_weight = 1,orientation_weight = 1.):
+def se3_chordal_loss(data_dict, t_weight = 1,orientation_weight = 171.):
     ''' Loss function for SE3. Note:
     data_dict["result"] is a tensor with shape (batch x sequence_len x 6)
     data_dict["poses"] is a list with len = sequence_len, each element in list

@@ -75,6 +75,7 @@ class DeepVOTrainer(object):
 		is_best = False
 
 		for epoch in range(1,self.len_epoch+1):
+			print('******************** epoch ', epoch, '********************')
 			train_log = self.train_epoch(epoch)
 			if self.validation:
 				val_log = self.validation_epoch(epoch)

@@ -8,6 +8,7 @@ model:
     args:
         batchNorm: true
         conv_dropout: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5]
+        output_shape: 6
         image_size: [371,1241]
         rnn_hidden_size: 1000
         rnn_dropout_out: 0.5
@@ -38,7 +39,7 @@ optimizer:
 #-------------------------------------
 #- Logging params
 #-------------------------------------
-log_dir: saved/logs/deepvo_se3/original_paper
+log_dir: saved/logs/deepvo_se3/original_paper/weighted
 log_step: 80
 
 #-------------------------------------
@@ -46,7 +47,7 @@ log_step: 80
 #-------------------------------------
 trainer: 
     epochs: 200
-    save_dir: "saved/deepvo_se3/original_paper"
+    save_dir: "saved/deepvo_se3/original_paper/weighted"
     save_period: 1
     monitor: "min mse_metric"
     tensorboard: true

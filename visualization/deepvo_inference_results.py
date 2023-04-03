@@ -69,18 +69,18 @@ def relative_to_absolute_pose(poses):
 
 def main():
     # Load the data
-    test_sequence='SeaFloor/track1'
-    cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml")
+    test_sequence='00'
+    cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","KITTI", test_sequence, test_sequence+".yml")
     data_loader = DataLoader(SingleDataset(cfg_dir),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
     data_dict = next(iter(data_loader))
     # Initialize the model
-    deepvo_model = DeepVOModel(batchNorm = True, checkpoint_location=["saved/deepvo/deepvo.pth.tar"],
+    deepvo_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo/original_paper", "best-checkpoint-epoch.pth")],
                     conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
                     image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0)
-    deepvo_se3_model = DeepVOModel(batchNorm = True, checkpoint_location=["saved/deepvo_se3/deepvo.pth.tar"],
+    deepvo_se3_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_se3/original_paper", "best-checkpoint-epoch.pth")],
                         conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
                         image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0)
-    deepvo_quat_model = DeepVOModel(batchNorm = True, checkpoint_location=["saved/deepvo_quat/deepvo.pth.tar"],
+    deepvo_quat_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_quat/original_paper", "best-checkpoint-epoch.pth")],
                         conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 7, 
                         image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0)
     # Some auxiliary variables
