@@ -94,7 +94,7 @@ def main():
     with torch.no_grad():     
         for batch_idx, data in tqdm(enumerate(data_loader),total=len(data_loader)):
                     # Every data instance is a pair of input data + target result
-                    data = data.to(device)
+                    data = to_device(data, "cuda:0" if torch.cuda.is_available() else "cpu")
                     # Make predictions for this batch
                     deepvo_outputs = deepvo_model(data)
                     deepvo_se3_outputs = deepvo_se3_model(data)
