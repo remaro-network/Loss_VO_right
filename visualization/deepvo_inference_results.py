@@ -72,17 +72,17 @@ def main():
     test_sequence='00'
     cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","KITTI", test_sequence, test_sequence+".yml")
     data_loader = DataLoader(SingleDataset(cfg_dir),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
-    data_dict = next(iter(data_loader))
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # Initialize the model
     deepvo_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo/original_paper", "best-checkpoint-epoch.pth")],
                     conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
-                    image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0)
+                    image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
     deepvo_se3_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_se3/original_paper", "best-checkpoint-epoch.pth")],
                         conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
-                        image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0)
+                        image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
     deepvo_quat_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_quat/original_paper", "best-checkpoint-epoch.pth")],
                         conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 7, 
-                        image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0)
+                        image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
     # Some auxiliary variables
     T_target_relative = list()  
 
@@ -94,7 +94,7 @@ def main():
     with torch.no_grad():     
         for batch_idx, data in tqdm(enumerate(data_loader),total=len(data_loader)):
                     # Every data instance is a pair of input data + target result
-                    data = to_device(data, 'cuda:0')
+                    data = data.to(device)
                     # Make predictions for this batch
                     deepvo_outputs = deepvo_model(data)
                     deepvo_se3_outputs = deepvo_se3_model(data)
