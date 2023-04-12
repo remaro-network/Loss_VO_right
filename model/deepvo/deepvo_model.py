@@ -5,7 +5,7 @@ from torch.nn.init import kaiming_normal_
 import numpy as np
 
 class DeepVOModel(nn.Module):
-    def __init__(self, batchNorm = True, checkpoint_location=None, clip = None, image_size = (480,640),
+    def __init__(self, batchNorm = True, checkpoint_location=None, training = False,clip = None, image_size = (480,640),
                  conv_dropout = (0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2), output_shape = 6,
                  rnn_hidden_size = 1000, rnn_dropout_out = 0.5, rnn_dropout_between = 0):
         """
@@ -24,7 +24,7 @@ class DeepVOModel(nn.Module):
         :param depth_cp_loc: Load list of checkpoints for the depth module. (Default=None)
         """
         super().__init__()
-
+        self.training = training
         # CNN
         self.batchNorm = batchNorm
         self.clip = clip
@@ -53,6 +53,10 @@ class DeepVOModel(nn.Module):
         self.linear = nn.Linear(in_features=rnn_hidden_size, out_features=output_shape)
         # initalization from https://github.com/ChiWeiHsiao/DeepVO-pytorch/blob/master/model.py
         for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Linear):
+                kaiming_normal_(m.weight.data)
+                if m.bias is not None:
+                    m.bias.data.zero_()
             if isinstance(m, nn.LSTM):
                 kaiming_normal_(m.weight_ih_l0)
                 kaiming_normal_(m.weight_hh_l0)

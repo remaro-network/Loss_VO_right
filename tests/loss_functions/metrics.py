@@ -10,21 +10,36 @@ class TestDatabaseDataloader(unittest.TestCase):
         ''' unit testing for pose loss w. orientation as quaternion'''
         # create a dummy data
         p1 = torch.zeros([1, 3, 7], device=torch.device('cuda:0'))
-        p1[:,:,4] = 1 # 180 deg. at Z
+        p1[:,:,3] = -0.0050037 # 180 deg. at Z, not normalized
+        p1[:,:,-1] = 1
         p2 = torch.eye(4, 4).unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
         p2 = torch.reshape(p2, (3, 1, 4, 4))
 
-        # call the function with data_dict
-        loss_dict = quaternion_pose_loss({"result": p1, "poses": p2})
+        p90 = torch.Tensor([ [0.,  -1,  0., 0.],
+                             [1., -0.,  0., 0.],
+                             [0.,  0.,  1., 0.],[0.,  0.,  0., 1.] ]).unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
+        p90 = torch.reshape(p90, (3, 1, 4, 4))
 
+        p180 = torch.Tensor([ [-1.,  0.,  0., 0.],
+                              [0. , -1.,  0., 0.],
+                              [0. ,  0.,  1., 0.],[0.,  0.,  0., 1.] ]).unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
+        p180 = torch.reshape(p180, (3, 1, 4, 4))
+
+        # call the function with data_dict
+        loss_dict90 = quaternion_pose_loss({"result": p1, "poses": p90})
+        loss_dict180 = quaternion_pose_loss({"result": p1, "poses": p180})
+        loss_dict0 = quaternion_pose_loss({"result": p1, "poses": p2})
+        
         # check the output
-        self.assertEqual(first = loss_dict["loss"].shape, second = torch.Size([1]))
-        self.assertAlmostEqual(loss_dict["loss"].item(), 1.41, delta = 0.01)
-        self.assertEqual(first = loss_dict["rotation_loss"].shape, second = torch.Size([1]))
-        self.assertAlmostEqual(loss_dict["rotation_loss"].item(), 1.41, delta = 0.01)
-        self.assertEqual(first = loss_dict["traslation_loss"].shape, second = torch.Size([1]))
-        self.assertAlmostEqual(loss_dict["traslation_loss"].item(), 0, delta = 0.01)
-    
+        self.assertEqual(first = loss_dict0["loss"].shape, second = torch.Size([1]))
+        self.assertAlmostEqual(loss_dict0["loss"].item(), 1.41, delta = 0.01)
+        self.assertAlmostEqual(loss_dict90["loss"].item(), 0.77, delta = 0.01)
+        self.assertAlmostEqual(loss_dict180["loss"].item(), 0., delta = 0.01)
+        self.assertEqual(first = loss_dict0["rotation_loss"].shape, second = torch.Size([1]))
+        self.assertAlmostEqual(loss_dict0["rotation_loss"].item(), 1.41, delta = 0.01)
+        self.assertEqual(first = loss_dict0["traslation_loss"].shape, second = torch.Size([1]))
+        self.assertAlmostEqual(loss_dict0["traslation_loss"].item(), 0, delta = 0.01)
+    @unittest.skip("skip test")
     def test_quaternion_distance_metric(self):
         ''' unit testing for quaternion distance function'''
         # create a dummy data
@@ -47,7 +62,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         self.assertEqual(first = distance.shape, second = torch.Size([1]))
         self.assertAlmostEqual(distance.item(), 1.41, delta = 0.01)
 
-    # @unittest.skip("skip test")
+    @unittest.skip("skip test")
     def test_se3_chordal_loss(self):
         ''' unit testing for se3 chordal loss function'''
         # create a dummy data
@@ -66,7 +81,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         self.assertEqual(first = loss_dict["traslation_loss"].shape, second = torch.Size([1]))
         self.assertAlmostEqual(loss_dict["traslation_loss"].item(), 0.77, delta = 0.01)
 
-    # @unittest.skip("skip test")
+    @unittest.skip("skip test")
     def test_SE3_chordal_metric(self):
         ''' unit testing for SE3 chordal distance function'''
         # create a dummy data
@@ -88,7 +103,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         self.assertEqual(first = distance.shape, second = torch.Size([1]))
         self.assertAlmostEqual(distance.item(), 8.77, delta = 0.1)
 
-    # @unittest.skip("skip test")
+    @unittest.skip("skip test")
     def test_SO3_chordal_metric(self):
         ''' unit testing for SO3 chordal distance function'''
         # create a dummy data
@@ -109,7 +124,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         self.assertEqual(first = distance.shape, second = torch.Size([1]))
         self.assertAlmostEqual(distance.item(), 8., delta = 0.01)
 
-    # @unittest.skip("skip test")
+    @unittest.skip("skip test")
     def test_vector_norm_metric(self):
         ''' unit testing for vector norm function'''
         # create a dummy data

@@ -61,34 +61,26 @@ def relative_to_absolute_pose(poses):
         list: list of absolute poses
     '''
     absolute_poses = []
-    for pose in poses:
-        absolute_poses.append(pose)
-        if len(absolute_poses) > 1:
-            absolute_poses[-1] = torch.matmul(absolute_poses[-1], absolute_poses[-2])
+    for i,relative_pose in enumerate(poses):
+        if i==0:
+            absolute_poses.append(relative_pose)
+            continue
+        last_absolute_pose = absolute_poses[-1]
+        absolute_poses.append(torch.matmul(last_absolute_pose, relative_pose))
     return absolute_poses
 
 def main():
     # Load the data
-    test_sequence='00'
+    test_sequence='09'
     cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","KITTI", test_sequence, test_sequence+".yml")
     data_loader = DataLoader(SingleDataset(cfg_dir),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # Initialize the model
-    deepvo_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo/original_paper", "best-checkpoint-epoch.pth")],
-                    conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
-                    image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
-    deepvo_se3_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_se3/original_paper", "best-checkpoint-epoch.pth")],
-                        conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
-                        image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
-    deepvo_quat_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_quat/original_paper", "best-checkpoint-epoch.pth")],
-                        conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 7, 
-                        image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
+    the_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo/original_paper/flownetS", "best-checkpoint-epoch.pth")],
+                            conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
+                            image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
     # Some auxiliary variables
-    T_target_relative = list()  
-
-    T_deepvo_relative = list()
-    T_deepvo_se3_relative = list()
-    T_deepvo_quat_relative = list()
+    the_relative = list()  
+    T_target_relative = list()
 
     # Now let's run the model on the data   
     with torch.no_grad():     
@@ -96,40 +88,30 @@ def main():
                     # Every data instance is a pair of input data + target result
                     data = to_device(data, "cuda:0" if torch.cuda.is_available() else "cpu")
                     # Make predictions for this batch
-                    deepvo_outputs = deepvo_model(data)
-                    deepvo_se3_outputs = deepvo_se3_model(data)
-                    deepvo_quat_outputs = deepvo_quat_model(data)
-
+                    deepvo_outputs = the_model(data)
                     target = data["poses"]
                     deepvo_estimate = deepvo_outputs["result"]
-                    deepvo_se3_estimate = deepvo_se3_outputs["result"]
-                    deepvo_quat_estimate = deepvo_quat_outputs["result"]
 
                     # Relative values
                     T_target_relative.append(target[0])
                     # for deepvo (w. angle axis rotations)
-                    T_estimate_rel = angle_axis_to_rotation_matrix(deepvo_estimate[:, 0, :3])            
-                    T_estimate_rel[:,0:3,3] = deepvo_estimate[:,0,-3:]
-                    T_deepvo_relative.append(T_estimate_rel)
+                    # the_rel = angle_axis_to_rotation_matrix(deepvo_estimate[:, 1, :3])            
+                    # the_rel[:,0:3,3] = deepvo_estimate[:,1,-3:]
                     # for deepvo (w. se3 rotations)
-                    T_estimate_se3_rel = se3_exp_map(deepvo_se3_estimate[:, 0, :6])
-                    T_deepvo_se3_relative.append(T_estimate_se3_rel)
+                    T_estimate_se3_rel = se3_exp_map(deepvo_estimate[:, 0, :6])
+                    the_relative.append(T_estimate_se3_rel)
                     # for deepvo (w. quaternion rotations)
-                    T_estimate_quat_rel = torch.eye(4)
-                    T_estimate_quat_rel[:,:3,:3] = quaternion_to_rotation_matrix(deepvo_quat_estimate[:, 0, 3:])
-                    T_estimate_quat_rel[:,0:3,3] = deepvo_quat_estimate[:,0,:3]
-                    T_deepvo_quat_relative.append(T_estimate_quat_rel)
+                    # T_estimate_quat_rel = torch.eye((4)).reshape(1,4,4)
+                    # q_rotation = quaternion_to_rotation_matrix(deepvo_estimate[:, 0, 3:])
+                    # T_estimate_quat_rel[:,:3,:3] = q_rotation
+                    # T_estimate_quat_rel[:,0:3,3] = deepvo_estimate[:,0,:3]
+                    # the_relative.append(T_estimate_quat_rel)
 
-        
+            
     T_target_absolute = relative_to_absolute_pose(T_target_relative)
-    T_deepvo_absolute = relative_to_absolute_pose(T_deepvo_relative)
-    T_deepvo_se3_absolute = relative_to_absolute_pose(T_deepvo_se3_relative)
-    T_deepvo_quat_absolute = relative_to_absolute_pose(T_deepvo_quat_relative)
-
-    plot_route(trajectories=[T_target_absolute, T_deepvo_absolute, T_deepvo_se3_absolute, T_deepvo_quat_absolute], 
-               colors=['r', 'g', 'b', 'o'], labels=['Ground Truth', 'DeepVO', 'DeepVO (SE3)', 'DeepVO (Quat)'])           
-        
-   
+    the_absolute = relative_to_absolute_pose(the_relative)
+    plot_route(trajectories=[T_target_absolute,the_absolute], 
+            colors=['darkseagreen', 'tomato'], labels=['gt','traj'])  
 
 
 

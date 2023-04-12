@@ -3,7 +3,7 @@ from torch import nn
 from utils.conversions import rotation_matrix_to_angle_axis , se3_exp_map, so3_exp_map, rotation_matrix_to_quaternion
 from model.metric_functions.vo_metrics import mse_metric,SE3_chordal_metric, SO3_chordal_metric,vector_distance, quaternion_distance_metric
 
-def quaternion_pose_loss(data_dict,t_weight = 1, orientation_weight = 1):
+def quaternion_pose_loss(data_dict,t_weight = 1, orientation_weight = 14.):
     ''' Loss function for pose expressed as translation vector and quaternion. Note:
     data_dict["result"] is a tensor with shape (batch x sequence_len x 7)
     data_dict["poses"] is a list with len = sequence_len, each element in list
@@ -43,7 +43,7 @@ def quaternion_pose_loss(data_dict,t_weight = 1, orientation_weight = 1):
     return loss_dict
 
 
-def se3_chordal_loss(data_dict, t_weight = 1,orientation_weight = 171.):
+def se3_chordal_loss(data_dict, t_weight = 1,orientation_weight = 153.):
     ''' Loss function for SE3. Note:
     data_dict["result"] is a tensor with shape (batch x sequence_len x 6)
     data_dict["poses"] is a list with len = sequence_len, each element in list
