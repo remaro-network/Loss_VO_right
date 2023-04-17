@@ -1,0 +1,71 @@
+#-------------------------------------
+#- Basic setup
+#-------------------------------------
+dataset: [kitti] # dataset [kitti_odom, kitti_raw, tum-1/2/3, adelaide1/2, mimir]
+n_gpu: 'cuda:0'
+model:
+    type: DeepVOModel
+    args:
+        batchNorm: true
+        training: true
+        conv_dropout: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5]
+        output_shape: 6
+        image_size: [371,1241]
+        rnn_hidden_size: 1000
+        rnn_dropout_out: 0.5
+        rnn_dropout_between: 0
+        checkpoint_location: [saved/checkpoints/flownets_EPE1.951.pth.tar]
+data_loader:
+    sequences: 
+            {
+                kitti: ["00","02","03","04","05","06","08"],
+            }
+    batch_size: 18
+    num_workers: 4
+    shuffle: true
+    target_image_size: [371,1241]
+
+loss: se3_chordal_loss
+
+#-------------------------------------
+#- Optimizer params
+#-------------------------------------
+optimizer:
+    type: Adam
+    args:
+        lr: 0.001
+        weight_decay: 0
+        amsgrad: true
+
+#-------------------------------------
+#- Logging params
+#-------------------------------------
+log_dir: saved/logs/deepvo_se3/icra23
+log_step: 80
+
+#-------------------------------------
+#- Trainer class params
+#-------------------------------------
+trainer: 
+    epochs: 200
+    save_dir: "saved/deepvo_se3/icra23"
+    save_period: 1
+    monitor: "min mse_metric"
+    tensorboard: true
+    metrics: ["mse_euler_position_metric", "mse_euler_rotation_metric"]
+    verbosity: 2
+#-------------------------------------
+#- Validation params
+#-------------------------------------
+validation: 
+    do_validation: true
+    sequences: 
+        {
+            kitti: ["09", "07"],
+        }
+    batch_size: 18
+    num_workers: 0
+    shuffle: true
+    target_image_size: [371,1241]
+    monitor: "min mse_metric"
+
