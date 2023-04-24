@@ -7,17 +7,18 @@ model:
     type: DeepVOModel
     args:
         batchNorm: true
+        training: true
         conv_dropout: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5]
         output_shape: 6
         image_size: [371,1241]
         rnn_hidden_size: 1000
         rnn_dropout_out: 0.5
         rnn_dropout_between: 0
-        checkpoint_location: [saved/checkpoints/FlowNet2_checkpoint.pth.tar]
+        checkpoint_location: [saved/checkpoints/flownets_EPE1.951.pth.tar]
 data_loader:
     sequences: 
             {
-                kitti: ["00","02","08","09"],
+                kitti: ["00","02","03","04","05","06","08"],
             }
     batch_size: 18
     num_workers: 4
@@ -39,7 +40,7 @@ optimizer:
 #-------------------------------------
 #- Logging params
 #-------------------------------------
-log_dir: saved/logs/deepvo_se3/original_paper/weighted
+log_dir: saved/logs/deepvo_se3/original_paper/weighted/newseq2
 log_step: 80
 
 #-------------------------------------
@@ -47,7 +48,7 @@ log_step: 80
 #-------------------------------------
 trainer: 
     epochs: 200
-    save_dir: "saved/deepvo_se3/original_paper/weighted"
+    save_dir: "saved/deepvo_se3/original_paper/weighted/newseq2"
     save_period: 1
     monitor: "min mse_metric"
     tensorboard: true
@@ -60,7 +61,7 @@ validation:
     do_validation: true
     sequences: 
         {
-            kitti: ["03","10"],
+            kitti: ["09", "07"],
         }
     batch_size: 18
     num_workers: 0
