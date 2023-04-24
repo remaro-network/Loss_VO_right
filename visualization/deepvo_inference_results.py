@@ -87,13 +87,13 @@ def relative_to_absolute_pose(poses):
 
 def main():
     # Load the data
-    test_sequence='01'
+    test_sequence='07'
+    models = ['deepvo_original', 'deepvo_se3', 'deepvo_quat']
+    # models = ['deepvo_original', 'deepvo_se3']
     cfg_dir=os.path.join(os.getcwd(),"configs","data_loader","KITTI", test_sequence, test_sequence+".yml")
     data_loader = DataLoader(SingleDataset(cfg_dir),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    deepvo_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo/original_paper/flownetS", "best-checkpoint-epoch.pth")],
-                            conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
-                            image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
+    
     
     # Some auxiliary variables
     T_target_relative = list()  
@@ -101,93 +101,104 @@ def main():
     T_deepvo_relative = list()
     T_deepvo_se3_relative = list()
     T_deepvo_quat_relative = list()
+    if 'deepvo_original' in models:
+        deepvo_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo/icra23", "best-checkpoint-epoch.pth")],
+                            conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
+                            image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
+        # Now let's run the model on the data   
+        with torch.no_grad():     
+            for batch_idx, data in tqdm(enumerate(data_loader),total=len(data_loader)):
+                        # Every data instance is a pair of input data + target result
+                        # data = to_device(data, "cuda:0" if torch.cuda.is_available() else "cpu")
+                        data = to_device(data,"cuda:0" if torch.cuda.is_available() else "cpu")
+                        # Make predictions for this batch
+                        deepvo_outputs = deepvo_model(data)
 
-    # Now let's run the model on the data   
-    with torch.no_grad():     
-        for batch_idx, data in tqdm(enumerate(data_loader),total=len(data_loader)):
-                    # Every data instance is a pair of input data + target result
-                    # data = to_device(data, "cuda:0" if torch.cuda.is_available() else "cpu")
-                    data = to_device(data,"cuda:0" if torch.cuda.is_available() else "cpu")
-                    # Make predictions for this batch
-                    deepvo_outputs = deepvo_model(data)
+                        target = data["poses"]
+                        deepvo_estimate = deepvo_outputs["result"]
 
-                    target = data["poses"]
-                    deepvo_estimate = deepvo_outputs["result"]
+                        # Relative values
+                        T_target_relative.append(target[0])
+                        # for deepvo (w. angle axis rotations)
+                        T_estimate_rel = angle_axis_to_rotation_matrix(deepvo_estimate[:, 1, :3])            
+                        T_estimate_rel[:,0:3,3] = deepvo_estimate[:,1,-3:]
+                        T_deepvo_relative.append(T_estimate_rel)
+                        
 
-                    # Relative values
-                    T_target_relative.append(target[0])
-                    # for deepvo (w. angle axis rotations)
-                    T_estimate_rel = angle_axis_to_rotation_matrix(deepvo_estimate[:, 1, :3])            
-                    T_estimate_rel[:,0:3,3] = deepvo_estimate[:,1,-3:]
-                    T_deepvo_relative.append(T_estimate_rel)
-                    
-
-            
-    T_target_absolute = relative_to_absolute_pose(T_target_relative)
-    T_deepvo_absolute = relative_to_absolute_pose(T_deepvo_relative)
-    del deepvo_model
-    # save absolute trajectories to csv file
-    save_trajectory_to_csv(T_target_absolute, test_sequence+"_target_absolute.csv")
-    save_trajectory_to_csv(T_deepvo_absolute, test_sequence+"_deepvo_absolute.csv")
-
-    deepvo_se3_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_se3/original_paper/weighted", "best-checkpoint-epoch.pth")],
-                        conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
-                        image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
-    # Now let's run the model on the data   
-    with torch.no_grad():     
-        for batch_idx, data in tqdm(enumerate(data_loader),total=len(data_loader)):
-                    # Every data instance is a pair of input data + target result
-                    data = to_device(data,"cuda:0" if torch.cuda.is_available() else "cpu")
-                    # Make predictions for this batch
-
-                    deepvo_se3_outputs = deepvo_se3_model(data)
-
-                    target = data["poses"]
-                    deepvo_se3_estimate = deepvo_se3_outputs["result"]
-
-                    # Relative values
-                    T_target_relative.append(target[0])
-                    # for deepvo (w. se3 rotations)
-                    T_estimate_se3_rel = se3_exp_map(deepvo_se3_estimate[:, 0, :6])
-                    T_deepvo_se3_relative.append(T_estimate_se3_rel)
-
-            
-    T_deepvo_se3_absolute = relative_to_absolute_pose(T_deepvo_se3_relative)
-    # del deepvo_se3_model
-    # save absolute trajectories to csv file
-    save_trajectory_to_csv(T_deepvo_se3_absolute, test_sequence+"_deepvo_se3_absolute.csv")
-
-    deepvo_quat_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_quat/original_paper/flownetS", "best-checkpoint-epoch.pth")],                  
-                        conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 7, 
-                        image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
-    # Now let's run the model on the data   
-    with torch.no_grad():     
-        for batch_idx, data in tqdm(enumerate(data_loader),total=len(data_loader)):
-                    # Every data instance is a pair of input data + target result
-                    data = to_device(data,"cuda:0" if torch.cuda.is_available() else "cpu")
-                    # Make predictions for this batch
-                    deepvo_outputs = deepvo_model(data)
-                    deepvo_se3_outputs = deepvo_quat_model(data)
-                    deepvo_quat_outputs = deepvo_quat_model(data)
-
-                    target = data["poses"]
-                    deepvo_quat_estimate = deepvo_quat_outputs["result"]
-
-                    # Relative values
-                    T_target_relative.append(target[0])
                 
-                    # for deepvo (w. quaternion rotations)
-                    T_estimate_quat_rel = torch.eye((4)).reshape(1,4,4)
-                    q_rotation = quaternion_to_rotation_matrix(deepvo_quat_estimate[:, 0, 3:])
-                    T_estimate_quat_rel[:,:3,:3] = q_rotation
-                    T_estimate_quat_rel[:,0:3,3] = deepvo_quat_estimate[:,0,:3]
-                    T_deepvo_quat_relative.append(T_estimate_quat_rel)
+        T_target_absolute = relative_to_absolute_pose(T_target_relative)
+        T_deepvo_absolute = relative_to_absolute_pose(T_deepvo_relative)
+        del deepvo_model
+        # save absolute trajectories to csv file
+        save_trajectory_to_csv(T_target_absolute, test_sequence+"_target_absolute.csv")
+        save_trajectory_to_csv(T_deepvo_absolute, test_sequence+"_deepvo_absolute.csv")
+        plot_route(trajectories=[T_target_absolute, T_deepvo_absolute], 
+            colors=['darkseagreen', 'tomato'], labels=['Ground Truth', 'DeepVO'])     
 
-            
+    if 'deepvo_se3' in models:
+        deepvo_se3_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_se3/icra23/2", "best-checkpoint-epoch.pth")],
+                            conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 6, 
+                            image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
+        # Now let's run the model on the data   
+        with torch.no_grad():     
+            for batch_idx, data in tqdm(enumerate(data_loader),total=len(data_loader)):
+                        # Every data instance is a pair of input data + target result
+                        data = to_device(data,"cuda:0" if torch.cuda.is_available() else "cpu")
+                        # Make predictions for this batch
 
-    T_deepvo_quat_absolute = relative_to_absolute_pose(T_deepvo_quat_relative)
-    # save absolute trajectories to csv file
-    save_trajectory_to_csv(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_absolute.csv")
+                        deepvo_se3_outputs = deepvo_se3_model(data)
+
+                        target = data["poses"]
+                        deepvo_se3_estimate = deepvo_se3_outputs["result"]
+
+                        # Relative values
+                        T_target_relative.append(target[0])
+                        # for deepvo (w. se3 rotations)
+                        T_estimate_se3_rel = se3_exp_map(deepvo_se3_estimate[:, 0, :6])
+                        T_deepvo_se3_relative.append(T_estimate_se3_rel)
+
+                
+        T_deepvo_se3_absolute = relative_to_absolute_pose(T_deepvo_se3_relative)
+        # del deepvo_se3_model
+        # save absolute trajectories to csv file
+        save_trajectory_to_csv(T_deepvo_se3_absolute, test_sequence+"_deepvo_se3_absolute.csv")
+        plot_route(trajectories=[T_target_absolute, T_deepvo_se3_absolute], 
+            colors=['darkseagreen', 'tomato'], labels=['Ground Truth', 'DeepVO (SE3)'])     
+
+    if 'deepvo_quat' in models:
+        deepvo_quat_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_quat/icra23", "best-checkpoint-epoch.pth")],                  
+                            conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 7, 
+                            image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
+        # Now let's run the model on the data   
+        with torch.no_grad():     
+            for batch_idx, data in tqdm(enumerate(data_loader),total=len(data_loader)):
+                        # Every data instance is a pair of input data + target result
+                        data = to_device(data,"cuda:0" if torch.cuda.is_available() else "cpu")
+                        # Make predictions for this batch
+                        deepvo_outputs = deepvo_quat_model(data)
+                        deepvo_se3_outputs = deepvo_quat_model(data)
+                        deepvo_quat_outputs = deepvo_quat_model(data)
+
+                        target = data["poses"]
+                        deepvo_quat_estimate = deepvo_quat_outputs["result"]
+
+                        # Relative values
+                        T_target_relative.append(target[0])
+                    
+                        # for deepvo (w. quaternion rotations)
+                        T_estimate_quat_rel = torch.eye((4)).reshape(1,4,4)
+                        q_rotation = quaternion_to_rotation_matrix(deepvo_quat_estimate[:, 0, 3:])
+                        T_estimate_quat_rel[:,:3,:3] = q_rotation
+                        T_estimate_quat_rel[:,0:3,3] = deepvo_quat_estimate[:,0,:3]
+                        T_deepvo_quat_relative.append(T_estimate_quat_rel)
+
+                
+
+        T_deepvo_quat_absolute = relative_to_absolute_pose(T_deepvo_quat_relative)
+        # save absolute trajectories to csv file
+        save_trajectory_to_csv(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_absolute.csv")
+        plot_route(trajectories=[T_target_absolute, T_deepvo_quat_absolute], 
+            colors=['darkseagreen', 'tomato'], labels=['Ground Truth', 'DeepVO (Quat)'])     
 
 
     # Now let's plot the results
