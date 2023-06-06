@@ -15,7 +15,7 @@ def main(config, options=()):
 
 if __name__ == '__main__':                     
     config_loader = ConfigLoader()
-    cfg = config_loader.merge_cfg('configs/train/deepvo_quat/original_paper.yml')
+    cfg = config_loader.merge_cfg('configs/train/deepvo_quat/icra23_geodesic.yml')
 
     print(cfg)
     main(cfg)
