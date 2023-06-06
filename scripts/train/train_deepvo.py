@@ -15,7 +15,7 @@ def main(config, options=()):
 
 if __name__ == '__main__':                     
     config_loader = ConfigLoader()
-    cfg = config_loader.merge_cfg('configs/train/deepvo/RWzhou.yml')
+    cfg = config_loader.merge_cfg('configs/train/deepvo/icra23.yml')
 
     print(cfg)
     main(cfg)

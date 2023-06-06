@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from data_loader.data_loaders import SingleDataset
 from model.deepvo.deepvo_model import DeepVOModel
 from utils.conversions import se3_exp_map, quaternion_to_rotation_matrix
+from evo.core.trajectory import PosePath3D
+from evo.tools.file_interface import write_kitti_poses_file
 
 def plot_route(trajectories = None, labels = None, colors = None):
     '''Plots the trajectory of the robot in 3D space
@@ -45,6 +47,12 @@ def plot_route(trajectories = None, labels = None, colors = None):
            title="Legend Title"  # Title for the legend
            )
     plt.show()
+def save_trajectory_to_evo_kitti(trajectory = None, file_name = None, experiment = None):
+    # convert trajectory list of tensors to list of numpy arrays 
+    trajectory = torch.stack(trajectory).view(len(trajectory),4,4).cpu().detach().numpy()
+    evo_array = PosePath3D(poses_se3=trajectory)
+    write_kitti_poses_file(os.path.join(os.getcwd(),"visualization",experiment,"evo_"+file_name), evo_array)
+
 
 def save_trajectory_to_csv(trajectory= None, file_name = None, experiment = None):
     '''Saves the trajectory of the robot in 3D space
@@ -89,7 +97,7 @@ def main():
     # Load the data
     test_sequences=['00','01','02','03','04','05','06','07','08','09','10']
     experiment = 'icra23'
-    models = ['deepvo_original', 'deepvo_se3', 'deepvo_quat']
+    models = ['deepvo_quat']
     # models = ['deepvo_original', 'deepvo_se3']
     
     for test_sequence in test_sequences:
@@ -133,7 +141,9 @@ def main():
             del deepvo_model
             # save absolute trajectories to csv file
             save_trajectory_to_csv(T_target_absolute, test_sequence+"_target_absolute.csv", experiment=experiment)
+            save_trajectory_to_evo_kitti(T_target_absolute, test_sequence+"_target_absolute.txt", experiment=experiment)
             save_trajectory_to_csv(T_deepvo_absolute, test_sequence+"_deepvo_absolute.csv", experiment=experiment)
+            save_trajectory_to_evo_kitti(T_deepvo_absolute, test_sequence+"_deepvo_absolute.txt", experiment=experiment)
             # plot_route(trajectories=[T_target_absolute, T_deepvo_absolute], 
             #     colors=['darkseagreen', 'tomato'], labels=['Ground Truth', 'DeepVO'])     
 
@@ -164,11 +174,12 @@ def main():
             # del deepvo_se3_model
             # save absolute trajectories to csv file
             save_trajectory_to_csv(T_deepvo_se3_absolute, test_sequence+"_deepvo_se3_absolute.csv", experiment=experiment)
+            save_trajectory_to_evo_kitti(T_deepvo_se3_absolute, test_sequence+"_deepvo_se3_absolute.txt", experiment=experiment)
             # plot_route(trajectories=[T_target_absolute, T_deepvo_se3_absolute], 
             #     colors=['darkseagreen', 'tomato'], labels=['Ground Truth', 'DeepVO (SE3)'])     
 
         if 'deepvo_quat' in models:
-            deepvo_quat_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_quat/icra23", "best-checkpoint-epoch.pth")],                  
+            deepvo_quat_model = DeepVOModel(batchNorm = True, checkpoint_location=[os.path.join(os.getcwd(),"saved/deepvo_quat_geodesic/icra23", "best-checkpoint-epoch.pth")],                  
                                 conv_dropout = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5],output_shape = 7, 
                                 image_size = (371,1241), rnn_hidden_size=1000, rnn_dropout_out=.5, rnn_dropout_between=0).to(device)
             # Now let's run the model on the data   
@@ -199,7 +210,8 @@ def main():
             T_deepvo_quat_absolute = relative_to_absolute_pose(T_deepvo_quat_relative)
             del deepvo_quat_model
             # save absolute trajectories to csv file
-            save_trajectory_to_csv(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_absolute.csv", experiment=experiment)
+            save_trajectory_to_csv(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_geodesic_absolute.csv", experiment=experiment)
+            save_trajectory_to_evo_kitti(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_geodesic_absolute.txt", experiment=experiment)
             # plot_route(trajectories=[T_target_absolute, T_deepvo_quat_absolute], 
             #     colors=['darkseagreen', 'tomato'], labels=['Ground Truth', 'DeepVO (Quat)'])     
 
