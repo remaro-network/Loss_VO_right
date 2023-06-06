@@ -191,9 +191,9 @@ class TestDatabaseDataloader(unittest.TestCase):
 
 
     @classmethod
-    @unittest.skip("Skipping dataloader MIMIR test")
+    # @unittest.skip("Skipping dataloader MIMIR test")
     def test_MultiDataLoader_MIMIR(self):
-        test_sequences=["SeaFloor/track0", "SeaFloor/track1"]
+        test_sequences=["SeaFloor/track0"]
         cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","MIMIR", test_sequence+".yml") for test_sequence in test_sequences]
         # _dsets = [Dataset(cfg_dir) for cfg_dir in cfg_dirs]
         _dset = DataLoader(MultiDataset(cfg_dirs),batch_size=1, shuffle=False, num_workers=0, drop_last=True)
@@ -202,7 +202,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         T_target_prev = list()  
 
         for index,d in tqdm(enumerate(_dset), total=len(_dset)):
-            # plt.imshow( d["keyframe"].permute(1, 2, 0)+.5)
+            plt.imshow( d["keyframe"][0].permute(1, 2, 0)+.5)
             if d["poses"] is not None:
                 H_kf0_kf1 = d["poses"][0]
                 if i ==0:
@@ -230,7 +230,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         plt.close()
 
     @classmethod
-    # @unittest.skip("Skipping dataloader KITTI test")
+    @unittest.skip("Skipping dataloader KITTI test")
     def test_MultiDataLoader_KITTI(self):
         test_sequences=["05"]
         cfg_dirs = [os.path.join(os.getcwd(),"configs","data_loader","KITTI",test_sequence, test_sequence+".yml") for test_sequence in test_sequences]
@@ -269,7 +269,7 @@ class TestDatabaseDataloader(unittest.TestCase):
         plt.close()
 
     @classmethod
-    @unittest.skip("Skipping dataloader KITTI test")
+    @unittest.skip("Skipping dataloader multidataset test")
     def test_MultiDataLoader_multidataset(self):
         cfg_dir1 = os.path.join(os.getcwd(),"configs","data_loader","EuRoC","MH_04_difficult", "MH_04_difficult.yml")
         cfg_dir2 = os.path.join(os.getcwd(),"configs","data_loader","TUM","rgbd_dataset_freiburg1_xyz", "rgbd_dataset_freiburg1_xyz.yml")

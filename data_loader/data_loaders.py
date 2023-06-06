@@ -80,6 +80,30 @@ class SingleDataset(Dataset):
         return cfg
 
     def preprocess_image(self,img,intrinsics,distcoeffs=None,crop_box=None):
+        ''' Undistort, and/or crop and/or resize image
+        Args:
+            img: image to be processed
+            intrinsics: camera intrinsics
+            distcoeffs: distortion coefficients
+            crop_box: crop box [ow,oh,bw,bh] or ['random','random',bw,h]
+        Returns:
+            img: processed image
+            intrinsics: processed camera intrinsics
+
+        The image is cropped as follows:
+            0                    w
+         0  +--------------------+->
+            |    ow          bw  |
+            | oh +-----------+   |
+            |    |           |   |
+            |    |   image   |   |
+            |    |           |   |
+            | bh +-----------+   |
+            |                    |
+         h  +--------------------+
+            |
+            v
+        '''
         # undistort image
         h,w,ch = img.shape
         img = img.astype(np.float32)
@@ -96,6 +120,10 @@ class SingleDataset(Dataset):
         # crop image
         if crop_box is not None:
             img = img[crop_box[1]:crop_box[1]+crop_box[3], crop_box[0]:crop_box[0]+crop_box[2]]
+            cy = img.shape[0]/2
+            cx = img.shape[1]/2
+            intrinsics[0][2] = cx
+            intrinsics[1][2] = cy
         # resize image
         if self.cfg.resize is not None:
             img = cv2.resize(img, (self.cfg.resize[1], self.cfg.resize[0]))
@@ -110,16 +138,27 @@ class SingleDataset(Dataset):
             image_tensor = torch.stack((image_tensor, image_tensor, image_tensor))
         else:
             image_tensor = image_tensor.permute(2, 0, 1)
-        return image_tensor
+        return image_tensor,intrinsics
 
     def __getitem__(self, index: int):
         if index == len(self.dataset.rgb_d_pose_pair):
             raise IndexError
+        if self.cfg.crop_box is not None:
+            crop_box = self.cfg.crop_box.copy()
+        # setup crop box if random
+            if crop_box[0]=='random':
+                crop_box[0] = np.random.randint(0,int(self.cfg.image.width)-crop_box[2])
+                print('crop_box[0]',crop_box[0])
+            if crop_box[1]=='random':
+                crop_box[1] = np.random.randint(0,int(self.cfg.image.height)-crop_box[3])
+                print('crop_box[1]',crop_box[1])
+        else:
+            crop_box = None
         # keyframe
         keyframe_id = index
         keyframe_timestamp = self.dataset.get_timestamp(index)
         keyframe = self.dataset.get_image(keyframe_timestamp)
-        keyframe = self.preprocess_image(keyframe, self.intrinsics,self.distortion_params,self.cfg.crop_box)
+        keyframe, kf_intrinsics = self.preprocess_image(keyframe, self.intrinsics,self.distortion_params,crop_box)
 
         # frames of sequence
         frame_indexes = [i+index+1 for i in range(0, self.cfg.seq_len)]
@@ -130,13 +169,13 @@ class SingleDataset(Dataset):
         else:
             keyframe_abs_gt = torch.from_numpy(self.dataset.gt_poses[index]).to(dtype=torch.float32) 
             frame_timestamps = [self.dataset.get_timestamp(i) for i in frame_indexes]
-            frames = [self.preprocess_image(self.dataset.get_image(i),self.intrinsics,self.distortion_params,self.cfg.crop_box) for i in frame_timestamps]
+            frames, frame_intrinsics = zip(*[self.preprocess_image(self.dataset.get_image(i),self.intrinsics,self.distortion_params,crop_box) for i in frame_timestamps])
             frame_abs_gts = [torch.from_numpy(self.dataset.gt_poses[i]).to(dtype=torch.float32) for i in frame_indexes]
             frame_rel_gts = [torch.matmul(torch.inverse(keyframe_abs_gt), frame_abs_gt) for frame_abs_gt in frame_abs_gts]
         data = {
             "keyframe": keyframe, # the reference image
             "keyframe_pose": torch.eye(4, dtype=torch.float32), # always identity
-            "keyframe_intrinsics": torch.tensor(self.intrinsics).to(dtype=torch.float32),
+            "keyframe_intrinsics": torch.tensor(kf_intrinsics).to(dtype=torch.float32),
             "frames": frames, # (ordered) neighboring images
             "poses": frame_rel_gts, # H_ref_src
             "intrinsics": torch.tensor(self.intrinsics).to(dtype=torch.float32),
