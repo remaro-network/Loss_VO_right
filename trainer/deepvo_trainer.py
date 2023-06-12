@@ -113,7 +113,7 @@ class DeepVOTrainer(object):
 
 				total_val_loss += loss.item()
 				total_val_loss_dict = operator_on_dict(total_val_loss_dict, loss_dict, lambda x, y: x + y)
-				self.writer.log_dictionary(total_val_loss_dict,len(self.validation_data_loader),batch_idx,epoch, 'validation')
+				# self.writer.log_dictionary(total_val_loss_dict,len(self.validation_data_loader),batch_idx,epoch, 'validation')
 				
 		# Get average loss per epoch
 		log_loss = {}
@@ -158,7 +158,7 @@ class DeepVOTrainer(object):
 
 			total_batch_loss += loss
 			total_batch_loss_dict = operator_on_dict(total_batch_loss_dict, loss_dict, lambda x, y: x + y)
-			self.writer.log_dictionary(total_batch_loss_dict,len(self.data_loader),batch_idx,epoch, 'train_batch')
+			# self.writer.log_dictionary(total_batch_loss_dict,len(self.data_loader),batch_idx,epoch, 'train_batch')
 
 		# Get average loss per epoch
 		log_loss = {}
