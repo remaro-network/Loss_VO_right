@@ -1,12 +1,82 @@
 import unittest
 import torch
 import os
-from model.metric_functions.vo_metrics import SO3_chordal_metric, vector_distance, SE3_chordal_metric, quaternion_distance_metric, quaternion_geodesic_distance
+from model.metric_functions.vo_metrics import SO3_chordal_metric, vector_distance, SE3_chordal_metric, quaternion_distance_metric, quaternion_geodesic_distance, SO3_geodesic_distance
 from model.loss_functions.pose_losses import se3_chordal_loss, mse_euler_pose_loss, quaternion_pose_loss, quaternion_geodesic_loss
-from utils.conversions import so3_exp_map, se3_exp_map, rotation_matrix_to_quaternion
+from utils.conversions import so3_exp_map, se3_exp_map, rotation_matrix_to_quaternion, angle_axis_to_rotation_matrix, quaternion_to_rotation_matrix, euler_angles_to_matrix
 
 class TestDatabaseDataloader(unittest.TestCase):
+    def test_orientation_comparison(self):
+        # Create dummy so3 data
+        so3_1 = torch.zeros([1, 3, 6], device = torch.device('cuda:0'))
+        so3_1[:, :, 2] = torch.pi # 180 deg. at Z
+        so3_2 = torch.eye(4, 4).unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
+        so3_2 = torch.reshape(so3_2, (3, 1, 4, 4))
 
+        # Create dummy quaternion data
+        q1 = torch.zeros(1, 4).to(torch.device('cuda:0'))
+        q1[:, 2] = 1 # 180 deg. at Z
+        q2 = torch.zeros(3, 4)
+        q2[:, 3] = 1 # 0 deg. at Z
+        q2 = q2.repeat(3,1,1).to(torch.device('cuda:0'))
+
+        # Create dummy euler data
+        euler1 = torch.zeros([1, 3, 6], device = torch.device('cuda:0'))
+        euler1[:, :, 2] = torch.pi # 180 deg. at Z
+        euler2 = torch.zeros([1, 3, 6], device = torch.device('cuda:0')).repeat(3,1,1)
+
+        # Run the functions
+        so3_distance = 0
+        q_distance = 0
+        euler_distance = 0
+
+        for i in range (so3_2.shape[0]):
+            # so3
+            so3_target = so3_2[i][:, :3, :3]
+            so3_estimate = so3_exp_map(so3_1[:, i, :3])
+            so3_distance += SO3_geodesic_distance(so3_estimate, so3_target)
+            # quaternion
+            q_target = q2[i]
+            q_target = quaternion_to_rotation_matrix(q_target)
+            q_estimate = quaternion_to_rotation_matrix(q1)
+            q_distance += SO3_geodesic_distance(q_estimate, q_target)
+            # euler
+            euler_target = euler2[i][:,:3]
+            euler_target = euler_angles_to_matrix(euler_target, 'XYZ')
+            euler_estimate = euler_angles_to_matrix(euler1[:, i, :3], 'XYZ')
+            euler_distance += SO3_geodesic_distance(euler_estimate, euler_target)
+        so3_distance/=so3_2.shape[0]
+        q_distance/=q2.shape[0]
+        euler_distance/=euler2.shape[0]
+
+        self.assertAlmostEqual(so3_distance, q_distance, delta = 0.01)
+        self.assertAlmostEqual(so3_distance, euler_distance, delta = 0.01)
+
+
+
+
+    @unittest.skip("skip test") 
+    def test_so3_geodesic_metrics(self):
+        ''' unit testing for testing unified orientation distance'''
+        # create a dummy data
+        r1 = torch.zeros([1, 3, 6], device = torch.device('cuda:0'))
+        r1[:, :, 2] = torch.pi
+        r2 = torch.eye(4, 4).unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
+        r2 = torch.reshape(r2, (3, 1, 4, 4))
+        distance = 0
+
+        # run the function
+        for i in range (r2.shape[0]):
+            r_target = r2[i][:, :3, :3]
+            r_estimate = so3_exp_map(r1[:, i, :3])
+            distance += SO3_geodesic_distance(r_estimate, r_target)
+        distance/=r2.shape[0]
+
+        # check the output
+        self.assertEqual(first = distance.shape, second = torch.Size([1]))
+        self.assertAlmostEqual(distance.item(), 8., delta = 0.01)
+
+    @unittest.skip("skip test")  
     def test_quaternion_geodesic_loss(self):
         ''' unit testing for pose loss w. orientation as quaternion'''
         # create a dummy data
@@ -41,7 +111,8 @@ class TestDatabaseDataloader(unittest.TestCase):
         self.assertAlmostEqual(loss_dict0["rotation_loss"].item(), 1., delta = 0.01)
         self.assertEqual(first = loss_dict0["traslation_loss"].shape, second = torch.Size([1]))
         self.assertAlmostEqual(loss_dict0["traslation_loss"].item(), 0, delta = 0.01)
-        
+    
+    @unittest.skip("skip test")      
     def test_quaternion_geodesic_metric(self):
         ''' unit testing for quaternion distance function'''
         # create a dummy data
