@@ -3,10 +3,44 @@ import torch
 import os
 from model.metric_functions.vo_metrics import SO3_chordal_metric, vector_distance, SE3_chordal_metric, quaternion_distance_metric, quaternion_geodesic_distance, SO3_geodesic_distance
 from model.loss_functions.pose_losses import se3_chordal_loss, mse_euler_pose_loss, quaternion_pose_loss, quaternion_geodesic_loss
-from utils.conversions import so3_exp_map, se3_exp_map, rotation_matrix_to_quaternion, angle_axis_to_rotation_matrix, quaternion_to_rotation_matrix, euler_angles_to_matrix
+from utils.conversions import so3_exp_map, se3_exp_map, rotation_matrix_to_quaternion, angle_axis_to_rotation_matrix, quaternion_to_rotation_matrix, euler_angles_to_matrix, so3_log_map
 
 class TestDatabaseDataloader(unittest.TestCase):
+    def test_loss_orientation_benchmark(self):
+
+        # Create dummy quaternion data
+        q1 = torch.zeros([1, 3, 7], device=torch.device('cuda:0'))
+        q1[:,:,3] = -0.0050037 # 180 deg. at Z, not normalized
+        q1[:,:,-1] = 1
+        q2 = torch.eye(4, 4).unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
+        q2 = torch.reshape(q2, (3, 1, 4, 4))
+
+        # Create dummy so3 data
+        so3_1 = torch.zeros([1, 3, 6], device = torch.device('cuda:0'))
+        so3_2 = torch.eye(4, 4) # 180 at z
+        so3_2[0,0] = -1
+        so3_2[1,1] = -1
+        so3_2 = so3_2.unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
+        so3_2 = torch.reshape(so3_2, (3, 1, 4, 4))
+
+
+        # Create dummy euler data
+        euler1 = torch.zeros([1, 3, 6], device = torch.device('cuda:0'))
+        euler1[:, :, 2] = torch.pi # 180 deg. at Z
+        euler2 = torch.eye(4, 4).unsqueeze(0).repeat(3, 1, 1).to(torch.device('cuda:0'))
+        euler2 = torch.reshape(euler2, (3, 1, 4, 4))
+
+        # Run losses
+        so3_loss = se3_chordal_loss({"result": so3_1, "poses": so3_2}, orientation_weight = 1.)
+        q_loss = quaternion_geodesic_loss({"result": q1, "poses": q2}, orientation_weight = 1.)
+        euler_loss = mse_euler_pose_loss({"result": euler1, "poses": euler2}, orientation_weight = 1.)
+
+        self.assertAlmostEqual(so3_loss["benchmark_rotation_loss"], q_loss["benchmark_rotation_loss"], delta = 0.01)
+        self.assertAlmostEqual(so3_loss["benchmark_rotation_loss"], euler_loss["benchmark_rotation_loss"], delta = 0.01)
+
+
     def test_orientation_comparison(self):
+        ''' Just test that the orientations are the same in the metric functions'''
         # Create dummy so3 data
         so3_1 = torch.zeros([1, 3, 6], device = torch.device('cuda:0'))
         so3_1[:, :, 2] = torch.pi # 180 deg. at Z

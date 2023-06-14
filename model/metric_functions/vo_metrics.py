@@ -72,6 +72,29 @@ def SE3_chordal_metric(T_estimate,T_target, t_weight = 1, orientation_weight = 1
     SE3_c = orientation_weight*so3_chordal + t_weight*tnorm
     return SE3_c
 
+
+def SO3_geodesic_distance(R1, R2):
+    """
+    From https://github.com/airalcorn2/pytorch-geodesic-loss/blob/master/geodesic_loss.py
+    Compute the geodesic distance between two rotation matrices.
+    Both `input` and `target` consist of rotation matrices, i.e., they have to be Tensors
+    of size :math:`(minibatch, 3, 3)`.
+
+    The loss can be described as:
+
+    .. math::
+        \text{loss}(R_{S}, R_{T}) = \arccos\left(\frac{\text{tr} (R_{S} R_{T}^{T}) - 1}{2}\right)
+
+    returns value in radians.
+    """
+    eps = 1e-7
+    R_diffs = R1 @ R2.permute(0, 2, 1)
+    # See: https://github.com/pytorch/pytorch/issues/7500#issuecomment-502122839.
+    traces = R_diffs.diagonal(dim1=-2, dim2=-1).sum(-1)
+    dists = torch.acos(torch.clamp((traces - 1) / 2, -1 + eps, 1 - eps))
+    return torch.mean(dists, dim=-1, keepdim=True)
+
+
 def SO3_chordal_metric(R_estimate,R_target):
     """
     Compute the geodesic distance between two rotation matrices.
