@@ -47,7 +47,7 @@ log_step: 80
 #- Trainer class params
 #-------------------------------------
 trainer: 
-    epochs: 250
+    epochs: 200
     save_dir: "saved/deepvo/icra23"
     save_period: 1
     monitor: "min mse_metric"

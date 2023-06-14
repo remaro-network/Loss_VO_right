@@ -41,7 +41,7 @@ optimizer:
 #-------------------------------------
 #- Logging params
 #-------------------------------------
-log_dir: saved/logs/deepvo_quat/icra23/2
+log_dir: saved/logs/deepvo_quat_geodesic/icra23
 log_step: 80
 
 #-------------------------------------
@@ -49,7 +49,7 @@ log_step: 80
 #-------------------------------------
 trainer: 
     epochs: 200
-    save_dir: "saved/deepvo_quat/icra23/2"
+    save_dir: "saved/deepvo_quat_geodesic/icra23"
     save_period: 1
     monitor: "min mse_metric"
     tensorboard: true
