@@ -97,7 +97,7 @@ def main():
     # Load the data
     test_sequences=['00','01','02','03','04','05','06','07','08','09','10']
     experiment = 'icra23'
-    models = ['deepvo_quat']
+    models = ['deepvo_quat','deepvo_original', 'deepvo_se3']
     # models = ['deepvo_original', 'deepvo_se3']
     
     for test_sequence in test_sequences:
@@ -210,8 +210,8 @@ def main():
             T_deepvo_quat_absolute = relative_to_absolute_pose(T_deepvo_quat_relative)
             del deepvo_quat_model
             # save absolute trajectories to csv file
-            save_trajectory_to_csv(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_geodesic_absolute.csv", experiment=experiment)
-            save_trajectory_to_evo_kitti(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_geodesic_absolute.txt", experiment=experiment)
+            save_trajectory_to_csv(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_absolute.csv", experiment=experiment)
+            save_trajectory_to_evo_kitti(T_deepvo_quat_absolute, test_sequence+"_deepvo_quat_absolute.txt", experiment=experiment)
             # plot_route(trajectories=[T_target_absolute, T_deepvo_quat_absolute], 
             #     colors=['darkseagreen', 'tomato'], labels=['Ground Truth', 'DeepVO (Quat)'])     
 

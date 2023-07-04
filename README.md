@@ -112,3 +112,16 @@ All the DeepVO models have been trained under the same experimental setup as fol
     - Epochs: 200
     - learning rate: 0.001
     - Stacking two images (seq length = 2)
+
+
+# 3. Inference
+
+So you have your model and now want to see which results it's inferring?
+For that, you can execute the script under `visualization/<algorithm_name>_inference_results.py`. The inference scripts that are available so far are:
+- DeepVO 
+
+    `visualization/deepvo_inference_results.py`. For this script, you need to set the variables:
+    - test_sequences: a list of all the sequences that you want to infer on.
+    - experiment: name of your experiment. This will be used to save the results.
+    - models: list of models you want to infer with.
+    The results (that is, the obtained trajectories) will be saved under `visualization/<experiment-name>` with the naming convention `<sequence_name>_<model-name>.csv`. Additionally, the trajectories are also saved in the tum format compatible with the evo tools as `evo_<sequence_name>_<model-name>.csv`.
