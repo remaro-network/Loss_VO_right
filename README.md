@@ -1,10 +1,10 @@
+**This work is part of the research carried out for the paper [TBD]()**
 
-
-# 1. Quickstart :hedgehog:
+# Quickstart :hedgehog:
 
 Add the base directory of this repo to your pythonpath
 > export PYTHONPATH=$PYTHONPATH:/your-path/VO_baseline
-
+# 1. Data loaders
 ## 1.1 Generate configs for data loaders (Automatically!)
 
 VO_baseline is designed for an easy deployment in your computer.
@@ -46,17 +46,24 @@ Original setup for DeepVO. Here, the output head is a 6-dimensional vector corre
 - `original_paper.yml`: with data explit and model configuration as proposed in the original DeepVO paper.
 - `icra23.yml`: with data split as proposed by me in my ICRA workshop paper [link TBD].
 - `RWzhou.yml`: with data split as proposed in [TBD].
+
+You can train DeepVO for this experiment by executing the script under `scripts/train/train_deepvo.py`, and choosing the config you want to use.
+
 ### 2.1.2 deepvo_quat
 Here, the output head is a 7-dimensional vector corresponding to the translation vector and the quaternion. Under `/configs/train/deepvo_quat` you can find the configs for the experiments under this setup:
 - `original_paper.yml`: with data explit and model configuration as proposed in the original DeepVO paper.
 - `icra23.yml`: with data split as proposed by me in my ICRA workshop paper [link TBD]. The loss function corresponds to the Euclidean loss
 - `icra23_geodesic.yml`: with data split as proposed in [TBD]. The loss function corresponds to the geodesic loss.
+
+You can train DeepVO for this experiment by executing the script under `scripts/train/train_deepvo_quat.py`, and choosing the config you want to use.
+
 ### 2.1.3. deepvo_se3
 Original setup for DeepVO. Here, the output head is a 6-dimensional vector corresponding to the translation vector and the three Euler angles. Under `/configs/train/deepvo` you can find the configs for the experiments under this setup:
 - `original_paper.yml`: with data explit and model configuration as proposed in the original DeepVO paper.
 - `icra23.yml`: with data split as proposed by me in my ICRA workshop paper [link TBD].
 - `RWzhou.yml`: with data split as proposed in [TBD].
 
+You can train DeepVO for this experiment by executing the script under `scripts/train/train_deepvo_se3.py`, and choosing the config you want to use.
 
 All the DeepVO models have been trained under the same experimental setup as follows:
 
