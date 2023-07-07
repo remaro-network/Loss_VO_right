@@ -1,6 +1,3 @@
-# Baseline repo for structuring learning-based VO projects
-
-![](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIymvK2fEydLiqzGboQLi7OrgsttKx6E_TpQUxyPz5DqUXVdM4ep27F-YjEl46axQlQC4&usqp=CAU)
 
 
 # 1. Quickstart :hedgehog:
@@ -31,46 +28,6 @@ Datasets="KITTI MIMIR Aqualoc/Archaeological_site_sequences EuRoC TUM"
 In `datasetRoot` you need to put the path to your folder containing all datasets. The variable `Datasets` indicates for which datasets available in the pipeline we want to create configs.
 
 
-### 1.1.1 Edit the data loader
-Although the configs are meant to work out of the box, you might want to edit some of the parameters for your custom setup. You can either manually edit each of the generated configs, or edit the config called `default_configuration.yml`. 
-
-`default_configuration.yml` is a template available for each dataset from which the configs for each track are generated.
-If you edit that file, when you generate the configs running `/scripts/generate_configs.sh`, those changes will be applied to all the generated configs. The parameters you might want to edit are:
-- `crop_box`: wether to crop a subset of the images or not. If empty, the data loader retrieves the full image. If not empty:
-    - [ow, oh, bw, bh] origin, width, and height of the box, respectively.
-    - [random, random, bw, bh] same but the origin coordinates of the bounding box are generated randomly.
-    - Example: given an image with width w and height h, crop the box [ow, oh, bw, bh]
-
-        ```
-                0                    w
-            0  +---------------------+->
-                |    ow          bw  |
-                | oh +-----------+   |
-                |    |           |   |
-                |    |   image   |   |
-                |    |           |   |
-                | bh +-----------+   |
-                |                    |
-            h   +--------------------+
-                |
-                v
-        ```
-
-## 1.2 Generate configs for your experiment under the existing models
-
-TBD
-
-## 1.3 Setup your own VO model
-
-TBD
-
-## 1.4 Setup your loss functions
-
-TBD
-
-## 1.5 Unit tests are your friends
-
-TBD
 
 
 # 2. Networks :eye:
