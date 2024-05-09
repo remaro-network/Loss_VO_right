@@ -1,4 +1,5 @@
-**This work is part of the research carried out for the paper [TBD]()**
+**This work is part of the research carried out for the paper [here](https://arxiv.org/abs/2401.05396)**:
+> Alvarez-Tunon, Olaya, Yury Brodskiy, and Erdal Kayacan. "Loss it right: Euclidean and riemannian metrics in learning-based visual odometry." In ISR Europe 2023; 56th International Symposium on Robotics, pp. 107-111. VDE, 2023.
 
 # Quickstart :hedgehog:
 
